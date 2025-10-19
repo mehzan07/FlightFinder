@@ -60,6 +60,12 @@ logging.basicConfig(
     handlers=[logging.StreamHandler()]
 )
 
+
+@app.context_processor
+def inject_current_year():
+    return {"current_year": datetime.now().year}
+
+
 if IS_LOCAL:
     logging.info("Running in local mode.")
 

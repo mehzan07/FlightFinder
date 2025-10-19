@@ -1,9 +1,11 @@
-from flask import Blueprint, redirect, render_template, request, jsonify, url_for
+from flask import Blueprint, redirect, render_template, request, jsonify, url_for,session
 from travel import travel_chatbot
 from datetime import datetime
 from config import DEBUG_MODE, FEATURED_FLIGHT_LIMIT
 import json
 from database import db
+import traceback
+
 
 from utils import extract_travel_entities
 from flight_search import search_flights
@@ -156,7 +158,8 @@ def travel_ui():
             direct_only=direct_only
         )
 
-    return render_template("travel_form.html", form_data={}, errors=[])
+    return render_template("travel_form.html", form_data=form_data, flights=flights, errors=errors)
+
 
 
 
@@ -248,47 +251,82 @@ def enter_passenger_info():
     return render_template("travel_confirm.html", flight=flight, passenger=passenger)
 
 
+
 @travel_bp.route("/payment", methods=["POST"])
 def payment():
-    flight_data = request.form.get("flight_data")
-    name = request.form.get("name")
-    email = request.form.get("email")
-    phone = request.form.get("phone")
-
     try:
-        flight = json.loads(flight_data)
+        # Flight data
+        flight_data = request.form.get("flight_data")
+        flight = json.loads(flight_data) if flight_data else {}
+
+        # Passenger info
+        name = request.form.get("name")
+        email = request.form.get("email")
+        phone = request.form.get("phone")
+
+        if not all([flight, name, email, phone]):
+            raise ValueError("Missing flight or passenger data")
+
+        passenger = {"name": name, "email": email, "phone": phone}
+
+        # Store in session for later use
+        session["passenger"] = passenger
+        session["flight"] = flight
+
+        return render_template("payment_form.html", flight=flight, passenger=passenger)
+
     except json.JSONDecodeError as e:
         logger.error(f"Failed to decode flight data: {e}")
         return "Invalid flight data", 400
 
-    passenger = {
-        "name": name,
-        "email": email,
-        "phone": phone
-    }
-    return render_template("payment_form.html", flight=flight, passenger=passenger)
 
+    except Exception as e:
+        logger.error("Error in payment route:\n" + traceback.format_exc())
+        return "Something went wrong with the payment process", 500    
+    
 
 @travel_bp.route("/complete-booking", methods=["POST"])
 def complete_booking():
-    flight_data = request.form.get("flight_data")
-    name = request.form.get("name")
-    email = request.form.get("email")
-    phone = request.form.get("phone")
-    card_number = request.form.get("card_number")
-    expiry = request.form.get("expiry")
-    cvv = request.form.get("cvv")
-
     try:
+        # Extract form data
+        flight_data = request.form.get("flight_data")
+        name = request.form.get("name")
+        email = request.form.get("email")
+        phone = request.form.get("phone")
+        card_number = request.form.get("card_number")
+        expiry = request.form.get("expiry")
+        cvv = request.form.get("cvv")
+
+        # Validate required fields
+        if not all([flight_data, name, email, phone, card_number, expiry, cvv]):
+            raise ValueError("Missing booking or payment data")
+
+        # Decode flight JSON
         flight = json.loads(flight_data)
+
+        # Create passenger dict
+        passenger = {"name": name, "email": email, "phone": phone}
+
+        # Store in session for later use
+        session["passenger"] = passenger
+        session["flight"] = flight
+
+        # Generate a mock reference code (you can replace with real logic)
+        reference = f"FF-{flight.get('flight_number', 'XXX')}-{name[:2].upper()}"
+
+        # Log booking and payment info
+        logger.info(f"✅ Booking completed for {name} ({email}, {phone}) → {flight}")
+        logger.info(f"💳 Payment info: Card ending in {card_number[-4:]}, Exp: {expiry}")
+
+        return render_template("booking_success.html", flight=flight, passenger=passenger, reference=reference)
+
     except json.JSONDecodeError as e:
         logger.error(f"Failed to decode flight data: {e}")
         return "Invalid flight data", 400
 
-    logger.info(f"✅ Booking completed for {name} ({email}, {phone}) → {flight}")
-    logger.info(f"💳 Payment info: Card ending in {card_number[-4:]}, Exp: {expiry}")
-
-    return render_template("booking_success.html", flight=flight, name=name)
+    except Exception as e:
+        logger.error(f"Error during complete_booking: {e}")
+        return "Something went wrong during booking completion", 500
 
 
 @travel_bp.route("/", methods=["GET"])
@@ -369,7 +407,6 @@ def results():
 
 
 
-
 @travel_bp.route("/confirm-booking", methods=["POST"])
 def confirm_booking():
     try:
@@ -379,7 +416,6 @@ def confirm_booking():
         phone = request.form.get("phone")
 
         # Flight info
-        import json
         flight_json = request.form.get("flight_data")
         flight = json.loads(flight_json) if flight_json else {}
 
@@ -388,10 +424,13 @@ def confirm_booking():
 
         passenger = {"name": name, "email": email, "phone": phone}
 
+        # Store in session for later use
+        session["passenger"] = passenger
+        session["flight"] = flight
+
         return render_template("payment_form.html", flight=flight, passenger=passenger)
 
     except Exception as e:
-        import traceback
         logger.error("Error during confirm_booking:\n" + traceback.format_exc())
         return "Something went wrong during booking confirmation", 500
 

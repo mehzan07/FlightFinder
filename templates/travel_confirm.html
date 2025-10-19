@@ -1,59 +1,56 @@
-<!DOCTYPE html>
-<html>
-  <head>
-    <title>Flight Confirmation</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
-  </head>
-  <body class="bg-light">
-    <div class="container mt-5">
-      <h2 class="mb-4">✅ Flight Selected</h2>
-      <div class="card p-4 shadow-sm">
+{% extends "base.html" %}
+{% block content %}
 
-        {% if passenger %}
-          <h5 class="mb-3">👤 Passenger Information</h5>
-          <ul class="list-group mb-4">
-            <li class="list-group-item"><strong>Name:</strong> {{ passenger.name }}</li>
-            <li class="list-group-item"><strong>Email:</strong> {{ passenger.email }}</li>
-            <li class="list-group-item"><strong>Phone:</strong> {{ passenger.phone }}</li>
-          </ul>
-        {% endif %}
+<div class="container mt-5">
+  <h2 class="mb-4">✅ Flight Selected</h2>
+  <div class="card p-4 shadow-sm">
 
-        <h5 class="mb-3">✈️ Flight Details</h5>
-        <table class="table table-bordered bg-white">
-          <tbody>
-            <tr><th>Airline</th><td>{{ flight.airline }}</td></tr>
-            <tr><th>Flight Number</th><td>{{ flight.flight_number }}</td></tr>
-            <tr><th>Origin</th><td>{{ flight.origin }}</td></tr>
-            <tr><th>Destination</th><td>{{ flight.destination }}</td></tr>
-            <tr><th>Departure Date</th><td>{{ flight.departure_date }}</td></tr>
-            <tr><th>Return Date</th><td>{{ flight.return_date }}</td></tr>
-            <tr><th>Cabin Class</th><td>{{ flight.cabin_class }}</td></tr>
-            <tr><th>Stops</th><td>{{ flight.stops }}</td></tr>
-            <tr><th>Duration</th><td>{{ flight.duration }} minutes</td></tr>
-            <tr><th>Price</th><td>€{{ flight.price }}</td></tr>
-            <tr><th>Vendor</th><td>{{ flight.vendor }}</td></tr>
-          </tbody>
-        </table>
+    {% if passenger %}
+      <h5 class="mb-3">👤 Passenger Information</h5>
+      <ul class="list-group mb-4">
+        <li class="list-group-item"><strong>Name:</strong> {{ passenger.name }}</li>
+        <li class="list-group-item"><strong>Email:</strong> {{ passenger.email }}</li>
+        <li class="list-group-item"><strong>Phone:</strong> {{ passenger.phone }}</li>
+      </ul>
+    {% endif %}
 
-        {% if not passenger %}
-          <form action="/enter-passenger-info" method="post">
-            <input type="hidden" name="flight_data" value='{{ flight | tojson | safe }}' />
-            <button type="submit" class="btn btn-primary mt-3">🧾 Continue to Booking</button>
-          </form>
-        {% else %}
-          <form action="/payment" method="post">
-            <input type="hidden" name="flight_data" value='{{ flight | tojson | safe }}'>
-            <input type="hidden" name="passenger_data" value='{{ passenger | tojson | safe }}'>
-            <button type="submit" class="btn btn-warning mt-3">💳 Proceed to Payment</button>
-          </form>
+    <h5 class="mb-3">✈️ Flight Details</h5>
+    <table class="table table-bordered bg-white">
+      <tbody>
+        <tr><th>Airline</th><td>{{ flight.airline or "—" }}</td></tr>
+        <tr><th>Flight Number</th><td>{{ flight.flight_number or "—" }}</td></tr>
+        <tr><th>Origin</th><td>{{ flight.origin or "—" }}</td></tr>
+        <tr><th>Destination</th><td>{{ flight.destination or "—" }}</td></tr>
+        <tr><th>Departure Date</th><td>{{ flight.departure_date or "—" }}</td></tr>
+        <tr><th>Return Date</th><td>{{ flight.return_date or "—" }}</td></tr>
+        <tr><th>Cabin Class</th><td>{{ flight.cabin_class or "—" }}</td></tr>
+        <tr><th>Stops</th><td>{{ flight.stops or "—" }}</td></tr>
+        <tr><th>Duration</th><td>{{ flight.duration or "—" }} minutes</td></tr>
+        <tr><th>Price</th><td>€{{ flight.price or "—" }}</td></tr>
+        <tr><th>Vendor</th><td>{{ flight.vendor or "—" }}</td></tr>
+      </tbody>
+    </table>
 
-          <div class="mt-3 d-flex gap-2">
-            <a href="/travel-ui" class="btn btn-success">✈️ Plan Another Trip</a>
-            <a href="/booking-history" class="btn btn-outline-primary">📜 View Booking History</a>
-          </div>
-        {% endif %}
+    {% if not passenger %}
+      <form action="/enter-passenger-info" method="post">
+        <input type="hidden" name="flight_data" value='{{ flight | tojson | safe }}' />
+        <button type="submit" class="btn btn-primary mt-3">🧾 Continue to Booking</button>
+      </form>
+    {% else %}
+      <form action="/payment" method="post">
+        <input type="hidden" name="flight_data" value='{{ flight | tojson | safe }}'>
+        <input type="hidden" name="name" value="{{ passenger.name }}">
+        <input type="hidden" name="email" value="{{ passenger.email }}">
+        <input type="hidden" name="phone" value="{{ passenger.phone }}">
+        <button type="submit" class="btn btn-warning mt-3">💳 Proceed to Payment</button>
+      </form>
 
+      <div class="mt-3 d-flex gap-2">
+        <a href="/travel-ui" class="btn btn-success">✈️ Plan Another Trip</a>
       </div>
-    </div>
-  </body>
-</html>
+    {% endif %}
+
+  </div>
+</div>
+
+{% endblock %}
