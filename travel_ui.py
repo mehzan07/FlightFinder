@@ -275,9 +275,8 @@ def payment():
         logger.error("Error in payment route:\n" + traceback.format_exc())
         return "Something went wrong with the payment process", 500    
     
-    
-    
-    
+   
+   
 @travel_bp.route("/complete-booking", methods=["POST"])
 def complete_booking():
     try:
@@ -302,21 +301,18 @@ def complete_booking():
         # Create passenger dict
         passenger = {"name": name, "email": email, "phone": phone}
 
-        # Store in session for later use
+        # Store in session for finalize step
         session["passenger"] = passenger
         session["flight"] = flight
-
-        # Generate reference code
-        reference = f"FF-{datetime.utcnow().strftime('%Y%m%d')}-{secrets.token_hex(3).upper()}"
+        session["card_last4"] = card_number[-4:]
+        session["expiry"] = expiry
 
         # Log booking and payment info
-        logger.info(f"✅ Booking completed for {name} ({email}, {phone}) → {flight}")
+        logger.info(f"✅ Booking prepared for {name} ({email}, {phone}) → {flight}")
         logger.info(f"💳 Payment info: Card ending in {card_number[-4:]}, Exp: {expiry}")
 
-        # Save booking to database (with duplicate check)
-        save_booking(reference, passenger, json.dumps(flight))
-
-        return render_template("booking_success.html", flight=flight, passenger=passenger, reference=reference)
+        # ✅ Redirect to finalize route
+        return redirect(url_for("travel_bp.finalize_booking"))
 
     except json.JSONDecodeError as e:
         logger.error(f"Failed to decode flight data: {e}")
@@ -326,9 +322,8 @@ def complete_booking():
         import traceback
         logger.error("Error during complete_booking:\n" + traceback.format_exc())
         return "Something went wrong during booking completion", 500
-    
-    
-    
+
+
 
 
 @travel_bp.route("/", methods=["GET"])
@@ -434,9 +429,11 @@ def confirm_booking():
     except Exception as e:
         import traceback
         logger.error("Error during confirm_booking:\n" + traceback.format_exc())
-        return "Something went wrong during booking confirmation", 500
+        return "Something went wrong during booking confirmation", 
     
     
+    
+       
 
 @travel_bp.route("/finalize-booking", methods=["POST"])
 def finalize_booking():
@@ -480,6 +477,8 @@ def finalize_booking():
     except Exception as e:
         print(f"Booking error: {e}")
         return f"Internal Server Error: {e}", 
+    
+    
     
     
     

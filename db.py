@@ -37,7 +37,7 @@ def save_booking(reference, passenger, flight_json):
         ).first()
 
         if existing:
-            print("Booking already exists. Skipping insert.")
+            print("Booking already exists. Skipping insert.", flush=True)
             return
 
         # Create new booking
