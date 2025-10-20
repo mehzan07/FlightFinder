@@ -16,13 +16,19 @@
 
         <div class="collapse navbar-collapse" id="navbarNav">
           <ul class="navbar-nav ms-auto">
+            <!-- Always-visible booking history link -->
+            <li class="nav-item">
+              <a class="nav-link" href="/booking-history">📄 View Booking History</a>
+            </li>
+
+            <!-- Optional dropdown menu -->
             <li class="nav-item dropdown">
               <a class="nav-link dropdown-toggle" href="#" id="userMenu" role="button" data-bs-toggle="dropdown">Account</a>
-              <ul class="dropdown-menu dropdown-menu-end">
+              <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userMenu">
                 <li>
-                  <a class="dropdown-item" href="/booking-history">View Booking History</a>
+                  <a class="dropdown-item" href="/booking-history">📄 View Booking History</a>
                 </li>
-                <!-- Add more options here if needed -->
+                <!-- Add more dropdown items here if needed -->
               </ul>
             </li>
           </ul>

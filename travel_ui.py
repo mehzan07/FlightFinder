@@ -37,12 +37,16 @@ def format_datetime(dt_str):
     
     
     
-
 @travel_bp.route("/travel-ui", methods=["GET", "POST"])
 def travel_ui():
     logger.info("travel_ui route hit")
     logger.debug(f"Request method: {request.method}")
     print("DEBUG_MODE is:", DEBUG_MODE)
+
+    # ✅ Always initialize these to avoid UnboundLocalError
+    form_data = {}
+    flights = []
+    errors = []
 
     if request.method == "POST":
         limit = request.form.get("limit", FEATURED_FLIGHT_LIMIT, type=int)
@@ -63,7 +67,8 @@ def travel_ui():
         if trip_type != "one-way" and not date_to_raw:
             errors.append("Return date is required for round-trip.")
 
-        form_data = request.form
+        form_data = request.form.copy()
+        form_data["direct_only"] = direct_only
 
         date_from = date_to = None
         if not origin_code:
@@ -73,7 +78,7 @@ def travel_ui():
         if not destination_code:
             errors.append("Destination airport is required.")
             if DEBUG_MODE:
-                print("⚠️  Destination airport is required.")
+                print("⚠️ Destination airport is required.")
         if not date_from_raw:
             errors.append("Departure date is required.")
         if trip_type != "one-way" and not date_to_raw:
@@ -86,7 +91,7 @@ def travel_ui():
         except ValueError:
             errors.append("Invalid departure date format.")
             if DEBUG_MODE:
-                print("⚠️  date_from: Invalid departure date format.")
+                print("⚠️ date_from: Invalid departure date format.")
 
         if trip_type != "one-way" and date_to_raw:
             try:
@@ -95,9 +100,6 @@ def travel_ui():
                     errors.append("Return date must be after departure date.")
             except ValueError:
                 errors.append("Invalid return date format.")
-                
-                form_data = request.form.copy()
-                form_data["direct_only"] = direct_only
 
         try:
             passengers = int(passengers_raw)
@@ -122,7 +124,7 @@ def travel_ui():
             )
 
         try:
-            result = travel_chatbot( user_input,trip_type=trip_type, limit=limit, direct_only=direct_only)
+            result = travel_chatbot(user_input, trip_type=trip_type, limit=limit, direct_only=direct_only)
         except Exception as e:
             error_msg = f"WARNING: Something went wrong while processing your request: {str(e)}"
             return render_template("travel_form.html", errors=[error_msg], form_data=form_data)
@@ -158,6 +160,7 @@ def travel_ui():
             direct_only=direct_only
         )
 
+    # ✅ Safe fallback for GET requests
     return render_template("travel_form.html", form_data=form_data, flights=flights, errors=errors)
 
 
@@ -225,16 +228,9 @@ def book_flight():
     logger.info(f"Booking flight: {flight}")
     return render_template("travel_confirm.html", flight=flight)
 
-
-
-
-
 @travel_bp.route("/enter-passenger-info", methods=["POST"])
 def enter_passenger_info():
     flight_data = request.form.get("flight_data")
-    name = request.form.get("name")
-    email = request.form.get("email")
-    phone = request.form.get("phone")
 
     try:
         flight = json.loads(flight_data)
@@ -242,13 +238,8 @@ def enter_passenger_info():
         logger.error(f"Failed to decode flight data: {e}")
         return "Invalid flight data", 400
 
-    passenger = {
-        "name": name,
-        "email": email,
-        "phone": phone
-    }
-
-    return render_template("travel_confirm.html", flight=flight, passenger=passenger)
+    # ✅ Just render the passenger form — no passenger data yet
+    return render_template("passenger_form.html", flight=flight)
 
 
 
@@ -284,18 +275,22 @@ def payment():
         logger.error("Error in payment route:\n" + traceback.format_exc())
         return "Something went wrong with the payment process", 500    
     
-
+    
+    
+    
 @travel_bp.route("/complete-booking", methods=["POST"])
 def complete_booking():
     try:
         # Extract form data
         flight_data = request.form.get("flight_data")
-        name = request.form.get("name")
-        email = request.form.get("email")
-        phone = request.form.get("phone")
         card_number = request.form.get("card_number")
         expiry = request.form.get("expiry")
         cvv = request.form.get("cvv")
+
+        # Fallback to session if form fields are missing
+        name = request.form.get("name") or session.get("passenger", {}).get("name")
+        email = request.form.get("email") or session.get("passenger", {}).get("email")
+        phone = request.form.get("phone") or session.get("passenger", {}).get("phone")
 
         # Validate required fields
         if not all([flight_data, name, email, phone, card_number, expiry, cvv]):
@@ -311,12 +306,15 @@ def complete_booking():
         session["passenger"] = passenger
         session["flight"] = flight
 
-        # Generate a mock reference code (you can replace with real logic)
-        reference = f"FF-{flight.get('flight_number', 'XXX')}-{name[:2].upper()}"
+        # Generate reference code
+        reference = f"FF-{datetime.utcnow().strftime('%Y%m%d')}-{secrets.token_hex(3).upper()}"
 
         # Log booking and payment info
         logger.info(f"✅ Booking completed for {name} ({email}, {phone}) → {flight}")
         logger.info(f"💳 Payment info: Card ending in {card_number[-4:]}, Exp: {expiry}")
+
+        # Save booking to database (with duplicate check)
+        save_booking(reference, passenger, json.dumps(flight))
 
         return render_template("booking_success.html", flight=flight, passenger=passenger, reference=reference)
 
@@ -325,8 +323,12 @@ def complete_booking():
         return "Invalid flight data", 400
 
     except Exception as e:
-        logger.error(f"Error during complete_booking: {e}")
+        import traceback
+        logger.error("Error during complete_booking:\n" + traceback.format_exc())
         return "Something went wrong during booking completion", 500
+    
+    
+    
 
 
 @travel_bp.route("/", methods=["GET"])
@@ -406,16 +408,15 @@ def results():
     return render_template("travel_results.html", **result)
 
 
-
 @travel_bp.route("/confirm-booking", methods=["POST"])
 def confirm_booking():
     try:
-        # Passenger info
+        # Extract passenger info
         name = request.form.get("name")
         email = request.form.get("email")
         phone = request.form.get("phone")
 
-        # Flight info
+        # Extract flight info
         flight_json = request.form.get("flight_data")
         flight = json.loads(flight_json) if flight_json else {}
 
@@ -428,12 +429,14 @@ def confirm_booking():
         session["passenger"] = passenger
         session["flight"] = flight
 
-        return render_template("payment_form.html", flight=flight, passenger=passenger)
+        return render_template("travel_confirm.html", flight=flight, passenger=passenger)
 
     except Exception as e:
+        import traceback
         logger.error("Error during confirm_booking:\n" + traceback.format_exc())
         return "Something went wrong during booking confirmation", 500
-
+    
+    
 
 @travel_bp.route("/finalize-booking", methods=["POST"])
 def finalize_booking():
@@ -476,12 +479,17 @@ def finalize_booking():
 
     except Exception as e:
         print(f"Booking error: {e}")
-        return f"Internal Server Error: {e}", 500
+        return f"Internal Server Error: {e}", 
     
-@travel_bp.route("/booking-history")
+    
+    
+@travel_bp.route("/booking-history", methods=["GET"]) 
 def booking_history():
-    from db import get_booking_history
-    bookings = get_booking_history()
+    try:
+        bookings = Booking.query.order_by(Booking.timestamp.desc()).all()
+    except Exception as e:
+        logger.error(f"Error loading booking history: {e}")
+        bookings = []
     return render_template("booking_history.html", bookings=bookings)
 
 

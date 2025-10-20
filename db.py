@@ -8,6 +8,7 @@ from sqlalchemy.exc import SQLAlchemyError
 
 from database import db
 from models import Booking
+import json
 
 
 # === Load environment variables ===
@@ -24,27 +25,41 @@ if not os.getenv("DATABASE_URL"):
 def get_booking_history():
     return Booking.query.order_by(Booking.timestamp.desc()).all()
 
-
 def save_booking(reference, passenger, flight_json):
-    from models import Booking  # Lazy import to avoid circular dependencies
 
     try:
+        # Check for existing booking
+        existing = Booking.query.filter_by(
+            passenger_name=passenger.get("name"),
+            passenger_email=passenger.get("email"),
+            passenger_phone=passenger.get("phone"),
+            flight_data=flight_json
+        ).first()
+
+        if existing:
+            print("Booking already exists. Skipping insert.")
+            return
+
+        # Create new booking
         new_booking = Booking(
             reference=reference,
-            passenger_name=passenger["name"],
-            passenger_email=passenger["email"],
-            passenger_phone=passenger["phone"],
+            passenger_name=passenger.get("name"),
+            passenger_email=passenger.get("email"),
+            passenger_phone=passenger.get("phone"),
             flight_data=flight_json,
             timestamp=datetime.utcnow()
         )
         db.session.add(new_booking)
         db.session.commit()
+
     except Exception as e:
         db.session.rollback()
         print(f"Error saving booking: {e}")
         raise e
     finally:
         db.session.close()
+        
+        
 
 def get_booking_history():
     from models import Booking
