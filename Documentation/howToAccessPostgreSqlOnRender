@@ -1,0 +1,101 @@
+Connect to your database
+Every Render Postgres database has two different URLs for incoming connections:
+
+An internal URL for connections from your other Render services hosted in the same region
+An external URL for connections from everything else Render
+
+Use the internal URL wherever possible. It minimizes query latency by enabling communication over your private network.
+
+An external URL for connections from everything else
+Render
+Internal
+URL
+External
+URL
+Web
+service
+DB
+Your dev machine
+(admin tools, etc.)
+Use the internal URL wherever possible. It minimizes query latency by enabling communication over your private network.
+
+Both URLs are available from the Connect menu in the top-right corner of your database's page in the Render Dashboard:
+  
+
+How to access to postgresql database on Render. from your local machine:
+1- go to render dashboard () and click on the database server under Connection you can find all info about your database
+2- copy external url (it look likes: - The external database URL from Render (looks like postgres://username:password@hostname:port/dbname)
+
+Option 1: Using pgAdmin
+- Open pgAdmin and create a new server.
+- Under the Connection tab, fill in:
+- Host name/address: the part after @ and before the slash in your external URL (e.g., your-db-host.render.com)
+- Port: usually 5432
+- Maintenance database: your database name
+- Username: from the URL
+- Password: from the URL (you’ll be prompted)
+- Save and connect.
+
+ption 2: Using psql from Terminal
+psql "postgres://username:password@hostname:5432/dbname"
+username, password; hostname; and dbname you can find from the Render under connection
+
+or copy your external url from render
+
+1- in your local machine open command prompt
+4- run this : > psql "your external url" as like as:
+>psql "postgresql://chatbot_db_z3f8_user:IkQGqICGvFKHIhNHS0aikxM4wr9JDhOW@dpg-d0ud97mmcj7s739inqrg-a.frankfurt-postgres.render.com:5432/chatbot_db_z3f8"
+then gives you:\
+chatbot_db_z3f8=>
+now you have connected to postgresql database and lets check som commands in the db:
+1- Run this to see all the tables:
+chatbot_db_z3f8=>\dt
+
+
+2- To list all schemas (if you're expecting more organization):
+chatbot_db_z3f8=>\dn
+
+
+3- And for listing all databases (though you likely only have one on Render):
+chatbot_db_z3f8=> \l
+
+4- View Table Structure
+If you want to peek inside a specific table:
+\d your_table_name like chatbot_db_z3f8=> \d chats;
+
+5- select from your table: 
+chatbot_db_z3f8=>SELECT * FROM chats LIMIT 10;
+6- List All Tables
+Run:
+\dt *.*
+
+
+This will show all tables in all schemas, not just the default public one.
+
+7- Check Your Current Schema
+Run:
+chatbot_db_z3f8=> SHOW search_path;
+
+
+8 - Or, now that you know you’re working inside the public schema, you can make things simpler by setting your search path:
+SET search_path TO public;
+
+
+Then you can just run:
+\d chats
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ 

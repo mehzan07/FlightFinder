@@ -1,0 +1,31 @@
+-- migrate user and chat tables to uses and chats by running this script in the Psql Tool in the PG Amin gui
+-- but first create  the new tables:
+-- run one by one
+
+-- Create 'users' table
+CREATE TABLE users (
+    id SERIAL PRIMARY KEY,
+    username VARCHAR(255) UNIQUE NOT NULL,
+    is_prov BOOLEAN DEFAULT FALSE,
+    last_login TIMESTAMP
+);
+
+-- Create 'chats' table
+CREATE TABLE chats (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER REFERENCES users(id),
+    session_id VARCHAR(255),
+    message TEXT NOT NULL,
+    normalized_input TEXT,
+    response TEXT NOT NULL,
+    language VARCHAR(10) DEFAULT 'en-US',
+    timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Migrate user data
+INSERT INTO users (id, username, is_pro, last_login)
+SELECT u.id, u.username AS username, u.is_pro, NULL FROM "user" u;
+
+-- Migrate chat data
+INSERT INTO chats (id, user_id, session_id, message, normalized_input, response, language, timestamp)
+SELECT id, user_id, session_id, message, normalized_input, response, language, timestamp FROM chat;
