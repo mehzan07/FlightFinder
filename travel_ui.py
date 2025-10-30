@@ -333,6 +333,7 @@ def home_page():
 
 # === Primary FlightFinder Route ===
 
+
 @travel_bp.route("/flightfinder", methods=["GET", "POST"])
 def flightfinder():
     print("FlightFinder route triggered", flush=True)
@@ -391,7 +392,6 @@ def flightfinder():
 
    # return render_template("travel_form.html", mode="chat")
     return render_template("travel_form.html", mode="chat", form_data={})
-
 # === Travel Results & Confirmation ===
 
 @travel_bp.route("/results", methods=["POST"])
