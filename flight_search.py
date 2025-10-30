@@ -14,8 +14,6 @@ logger = get_logger(__name__)
 from config import AFFILIATE_MARKER, API_TOKEN,HOST,USER_IP,USE_REAL_API, FEATURED_FLIGHT_LIMIT,DEBUG_MODE
 
 
-
-
 def search_flights(origin_code, destination_code, date_from_str, date_to_str, trip_type, adults=1, children=0,infants=0, cabin_class="economy", limit=None, direct_only=False):
     if USE_REAL_API:
         return search_flights_api(origin_code, destination_code, date_from_str, date_to_str, trip_type, adults, children, infants, cabin_class,limit=limit, direct_only=direct_only)
@@ -57,8 +55,6 @@ def generate_signature(token, marker, host, user_ip, locale, trip_class, passeng
     print("🔐 Raw signature string:", raw_string)
     # Hash it
     return hashlib.md5(raw_string.encode("utf-8")).hexdigest()
-
-
 
 def search_flights_api(origin_code, destination_code, date_from_str, date_to_str=None, trip_type="round-trip", adults=1, children=0, infants=0, cabin_class="economy", limit=None, direct_only=False):
     init_url = "https://api.travelpayouts.com/v1/flight_search"
@@ -169,13 +165,21 @@ def search_flights_api(origin_code, destination_code, date_from_str, date_to_str
         for gate_id, term_data in terms.items():
             price = term_data.get("price")
             currency = term_data.get("currency")
-            booking_link = term_data.get("deep_link") or term_data.get("url")
+            
 
-            if not isinstance(booking_link, str) or not booking_link.startswith("http"):
+            raw_url = term_data.get("deep_link") or term_data.get("url")
+
+            if isinstance(raw_url, str) and raw_url.startswith("http"):
+                booking_link = raw_url
+                print(f"🔗 Final booking link: {booking_link}")
+            elif isinstance(raw_url, int) or (isinstance(raw_url, str) and raw_url.isdigit()):
+                booking_link = f"https://www.travelpayouts.com/redirect/{raw_url}"
+                print(f"🔗 Final booking link: {booking_link}") 
+            else:
                 if DEBUG_MODE:
-                    print(f"⛔ Skipping invalid booking link: {booking_link}")
+                    print(f"⛔ Skipping invalid booking link: {raw_url}")
                 continue
-
+            
             segment = proposal.get("segment", [])
             all_flights = []
             for seg in segment:
@@ -236,7 +240,6 @@ def search_flights_api(origin_code, destination_code, date_from_str, date_to_str
         print(f"\n  ✈️   {flight}")
 
     return featured_flights
-
 
 
 
