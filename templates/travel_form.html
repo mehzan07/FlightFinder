@@ -54,6 +54,18 @@
       <label class="form-check-label" for="direct_only">🛫 Show only direct flights</label>
     </div>
 
+    <div class="form-group">
+  <label>Trip Type:</label><br>
+  <label>
+    <input type="radio" name="trip_type" value="one-way" checked>
+    One-way
+  </label>
+  <label style="margin-left: 20px;">
+    <input type="radio" name="trip_type" value="round-trip">
+    Round-trip
+  </label>
+</div>
+
     <!-- Departure Date -->
     <div class="mb-3">
       <label class="form-label" for="date_from">📅 Depart</label>
@@ -61,14 +73,14 @@
              value="{{ session.last_search.departure if session.last_search else form_data.date_from if form_data else '2025-12-10' }}">
     </div>
 
-    <!-- Return Date -->
-    <div class="mb-3" id="returnDateGroup"
-         style="{% if form_data and form_data.trip_type == 'one-way' %}display:none;{% endif %}">
-      <label class="form-label" for="date_to">📅 Return</label>
-      <input type="date" id="date_to" name="date_to" class="form-control"
-             value="{{ session.last_search.return if session.last_search else form_data.date_to if form_data else '2025-12-17' }}"
-             {% if not form_data or form_data.trip_type == 'round-trip' %}required{% endif %}>
-    </div>
+                <!-- Return Date -->
+        <div class="mb-3" id="returnDateGroup"
+            style="{% if form_data and form_data.trip_type == 'one-way' %}display:none;{% endif %}">
+          <label class="form-label" for="date_to">📅 Return</label>
+          <input type="date" id="date_to" name="date_to" class="form-control"
+                value="{% if session.last_search and session.last_search.return %}{{ session.last_search.return }}{% elif form_data and form_data.date_to %}{{ form_data.date_to }}{% else %}2025-12-17{% endif %}"
+                {% if not form_data or form_data.trip_type == 'round-trip' %}required{% endif %}>
+        </div>
 
     <!-- Passengers -->
     <div class="mb-3">
@@ -139,6 +151,7 @@
 {% raw %}
 <script>
 $(document).ready(function() {
+  // ✈️ Autocomplete setup
   function setupAirportAutocomplete(inputId) {
     $("#" + inputId).on("input", function() {
       const query = $(this).val().trim().toLowerCase();
@@ -163,9 +176,9 @@ $(document).ready(function() {
   setupAirportAutocomplete("origin_code");
   setupAirportAutocomplete("destination_code");
 
+  // 📅 Date logic
   const dateFrom = document.getElementById("date_from");
   const dateTo = document.getElementById("date_to");
-  const tripType = document.getElementById("trip_type");
   const returnDateGroup = document.getElementById("returnDateGroup");
 
   if (dateFrom && dateTo) {
@@ -176,56 +189,45 @@ $(document).ready(function() {
     });
   }
 
+  // 🔁 Trip type toggle logic
+  const tripTypeRadios = document.querySelectorAll('input[name="trip_type"]');
   const toggleReturnFields = () => {
-    if (tripType.value === "one-way") {
+    const selected = document.querySelector('input[name="trip_type"]:checked');
+    if (selected && selected.value === "one-way") {
       returnDateGroup.style.display = "none";
       dateTo.required = false;
       dateTo.value = "";
     } else {
-     
-
-
-
-
-
-
-
-
-
-
-
-
-
-    const toggleReturnFields = () => {
-      if (tripType.value === "one-way") {
-        returnDateGroup.style.display = "none";
-        dateTo.required = false;
-        dateTo.value = "";
-      } else {
-        returnDateGroup.style.display = "block";
-        dateTo.required = true;
+      returnDateGroup.style.display = "block";
+      dateTo.required = true;
+      if (!dateTo.value) {
+        dateTo.value = "2025-12-17"; // ✅ Set default return date if empty
       }
-    };
-
-    tripType.addEventListener("change", toggleReturnFields);
-    toggleReturnFields();  // ✅ Run on page load
-
-    // ⏳ Show loading spinner on form submit
-    const form = document.querySelector("form");
-    const loading = document.getElementById("loading");
-    if (form) {
-      form.addEventListener("submit", (event) => {
-        event.preventDefault();
-        if (loading) {
-          loading.style.display = "block";
-          setTimeout(() => {
-            form.submit();
-          }, 500);
-        } else {
-          form.submit();  // ✅ fallback if no loading spinner
-        }
-      });
     }
+  };
+
+  tripTypeRadios.forEach(radio => {
+    radio.addEventListener("change", toggleReturnFields);
+  });
+  toggleReturnFields(); // ✅ Run on page load
+
+  // ⏳ Loading spinner on submit
+  const form = document.querySelector("form");
+  const loading = document.getElementById("loading");
+  if (form) {
+    form.addEventListener("submit", (event) => {
+      event.preventDefault();
+      if (loading) {
+        loading.style.display = "block";
+        setTimeout(() => {
+          form.submit();
+        }, 500);
+      } else {
+        form.submit(); // ✅ fallback
+      }
+    });
+  }
+});
 </script>
 {% endraw %}
 
