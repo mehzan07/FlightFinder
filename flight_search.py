@@ -171,14 +171,13 @@ def search_flights_api(origin_code, destination_code, date_from_str, date_to_str
 
             if isinstance(raw_url, str) and raw_url.startswith("http"):
                 booking_link = raw_url
-                print(f"🔗 Final booking link: {booking_link}")
-            elif isinstance(raw_url, int) or (isinstance(raw_url, str) and raw_url.isdigit()):
-                booking_link = f"https://www.travelpayouts.com/redirect/{raw_url}"
-                print(f"🔗 Final booking link: {booking_link}") 
+            elif isinstance(raw_url, str) and raw_url.isdigit():
+                    booking_link = f"https://www.aviasales.com?marker={AFFILIATE_MARKER}&redirect_id={raw_url}"
             else:
-                if DEBUG_MODE:
-                    print(f"⛔ Skipping invalid booking link: {raw_url}")
-                continue
+                    booking_link = f"https://www.aviasales.com?marker={AFFILIATE_MARKER}"  # fallback
+                    
+            print(f"🔗 Final booking link: {booking_link}")
+            
             
             segment = proposal.get("segment", [])
             all_flights = []

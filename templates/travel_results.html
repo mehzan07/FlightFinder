@@ -109,7 +109,7 @@
                     🏢 <strong>Vendor:</strong> {{ flight.vendor }}
                   </p>
 
-                  <a href="{{ flight.link }}" target="_blank" class="btn btn-success mt-2">Book Now</a>
+                  <a href="{{ flight.link }}" target="_blank" rel="noopener noreferrer" class="btn btn-success mt-2">Book Now</a>
                   <a href="{{ url_for('travel.view_offer', offer_id=flight.id) }}" class="btn btn-outline-info mt-2">View Details</a>
                 </div>
               </div>
