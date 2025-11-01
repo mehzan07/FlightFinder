@@ -356,6 +356,7 @@ def flightfinder():
 
         # ✅ Extract dynamic values from form
         trip_type = request.form.get("trip_type", "round-trip")
+       
         adults = int(request.form.get("passengers", 1))
         children = int(request.form.get("children", 0))
         infants = int(request.form.get("infants", 0))

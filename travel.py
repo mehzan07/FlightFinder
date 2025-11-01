@@ -89,9 +89,9 @@ def travel_chatbot(user_input: str, trip_type: str = "round-trip", limit=None, d
             "trip_info": {}
         }
 
-    #trip_type = "one-way" if info.get("date_to") is None or info["date_from"] == info["date_to"] else "round-trip"
-    #trip_type = request.form.get("trip_type")  # 'one-way' or 'round-trip'
-    trip_type = info.get("trip_type", "round-trip")  # fallback if missing
+    trip_type = info.get("trip_type")
+    if trip_type not in ["one-way", "round-trip"]:
+        trip_type = "one-way"  # safer default
 
     date_from_str = info["date_from"].strftime("%Y-%m-%d") if info.get("date_from") else ""
     date_to_str = info["date_to"].strftime("%Y-%m-%d") if info.get("date_to") else ""
@@ -183,17 +183,21 @@ def travel_chatbot(user_input: str, trip_type: str = "round-trip", limit=None, d
     "origin": info["origin_code"],
     "destination": info["destination_code"],
     "departure_date": info["date_from"].strftime('%Y-%m-%d') if info.get("date_from") else "",
-    "return_date": info["date_to"].strftime('%Y-%m-%d') if info.get("date_to") else "",
     "passengers": passengers,
-    "trip_type": info.get("trip_type", "round-trip")  # fallback if missing
+    "trip_type": trip_type
 }
+    errors = []
+    if trip_type == "round-trip":
+        trip_info["return_date"] = info["date_to"].strftime('%Y-%m-%d') if info.get("date_to") else ""
 
     if trip_type == "one-way":
         summary = (
-            f"You're taking a one-way trip from {info['origin']} to {info['destination']} "
-            f"on {info['date_from'].strftime('%B %d, %Y')} with {passengers} passenger(s)."
-            )
+        f"You're taking a one-way trip from {info['origin']} to {info['destination']} "
+        f"on {info['date_from'].strftime('%B %d, %Y')} with {passengers} passenger(s)."
+       )
     else:
+        if trip_type == "round-trip" and not info.get("date_to"):
+            errors.append("Return date is required for round-trip.")
         summary = (
             f"You're taking a round-trip from {info['origin']} to {info['destination']} "
             f"from {info['date_from'].strftime('%B %d, %Y')} to {info['date_to'].strftime('%B %d, %Y')} "

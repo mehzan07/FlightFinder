@@ -55,7 +55,7 @@
     </div>
 
     <div class="form-group">
-  <label>Trip Type:</label><br>
+      <label>Trip Type:</label><br>
   <label>
     <input type="radio" name="trip_type" value="one-way" checked>
     One-way
@@ -72,15 +72,20 @@
       <input type="date" id="date_from" name="date_from" class="form-control" required
              value="{{ session.last_search.departure if session.last_search else form_data.date_from if form_data else '2025-12-10' }}">
     </div>
-
-                <!-- Return Date -->
-        <div class="mb-3" id="returnDateGroup"
-            style="{% if form_data and form_data.trip_type == 'one-way' %}display:none;{% endif %}">
-          <label class="form-label" for="date_to">📅 Return</label>
-          <input type="date" id="date_to" name="date_to" class="form-control"
-                value="{% if session.last_search and session.last_search.return %}{{ session.last_search.return }}{% elif form_data and form_data.date_to %}{{ form_data.date_to }}{% else %}2025-12-17{% endif %}"
-                {% if not form_data or form_data.trip_type == 'round-trip' %}required{% endif %}>
-        </div>
+<!-- Return Date -->
+<div class="mb-3" id="returnDateGroup"
+     style="{% if form_data and form_data.trip_type == 'one-way' %}display:none;{% endif %}">
+  <label class="form-label" for="date_to">📅 Return</label>
+  <input type="date" id="date_to" name="date_to" class="form-control"
+         value="{% if session.last_search and session.last_search.return %}
+                   {{ session.last_search.return }}
+                {% elif form_data and form_data.date_to %}
+                   {{ form_data.date_to }}
+                {% else %}
+                   2025-12-17
+                {% endif %}"
+         {% if not form_data or form_data.trip_type == 'round-trip' %}required{% endif %}>
+</div>
 
     <!-- Passengers -->
     <div class="mb-3">
@@ -196,12 +201,15 @@ $(document).ready(function() {
     if (selected && selected.value === "one-way") {
       returnDateGroup.style.display = "none";
       dateTo.required = false;
-      dateTo.value = "";
+      dateTo.value = ""; // ✅ Clear value to avoid backend validation
     } else {
       returnDateGroup.style.display = "block";
       dateTo.required = true;
       if (!dateTo.value) {
-        dateTo.value = "2025-12-17"; // ✅ Set default return date if empty
+        const today = new Date();
+        const defaultReturn = new Date(today);
+        defaultReturn.setDate(today.getDate() + 7); // 7 days later
+        dateTo.value = defaultReturn.toISOString().split("T")[0]; // ✅ Dynamic default
       }
     }
   };

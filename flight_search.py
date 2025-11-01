@@ -165,17 +165,14 @@ def search_flights_api(origin_code, destination_code, date_from_str, date_to_str
         for gate_id, term_data in terms.items():
             price = term_data.get("price")
             currency = term_data.get("currency")
+             
             
-
-            raw_url = term_data.get("deep_link") or term_data.get("url")
-
-            if isinstance(raw_url, str) and raw_url.startswith("http"):
+            raw_url = term_data.get("deep_link")
+            if isinstance(raw_url, str) and raw_url.startswith("https://www.aviasales.com/search/"):
                 booking_link = raw_url
-            elif isinstance(raw_url, str) and raw_url.isdigit():
-                    booking_link = f"https://www.aviasales.com?marker={AFFILIATE_MARKER}&redirect_id={raw_url}"
             else:
-                    booking_link = f"https://www.aviasales.com?marker={AFFILIATE_MARKER}"  # fallback
-                    
+                booking_link = f"https://www.aviasales.com?marker={AFFILIATE_MARKER}"  # fallback
+    
             print(f"🔗 Final booking link: {booking_link}")
             
             

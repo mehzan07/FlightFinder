@@ -110,6 +110,10 @@
                   </p>
 
                   <a href="{{ flight.link }}" target="_blank" rel="noopener noreferrer" class="btn btn-success mt-2">Book Now</a>
+                  {% if 'search' not in flight.link %}
+                    <small class="text-muted">Search will open on Aviasales homepage</small>
+                  {% endif %}
+
                   <a href="{{ url_for('travel.view_offer', offer_id=flight.id) }}" class="btn btn-outline-info mt-2">View Details</a>
                 </div>
               </div>
