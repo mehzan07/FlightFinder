@@ -16,114 +16,102 @@
   </div>
   {% endif %}
 
-  <form method="POST" action="/travel-ui" class="card p-4 shadow-sm">
-    <!-- From -->
-    <div class="mb-3">
-      <label for="origin_code" class="form-label">From</label>
-      <input type="text" class="form-control" id="origin_code" name="origin_code"
-             list="origin_code-list"
-             value="{{ form_data.origin_code if form_data else 'Stockholm Arlanda (ARN)' }}"
-             placeholder="Enter city or airport" />
-      <datalist id="origin_code-list"></datalist>
-    </div>
+<form method="POST" action="/travel-ui" class="card p-4 shadow-sm">
+  <!-- From -->
+  <div class="mb-3">
+    <label for="origin_code" class="form-label">From</label>
+    <input type="text" class="form-control" id="origin_code" name="origin_code"
+           list="origin_code-list"
+           value="{{ form_data.origin_code if form_data else 'Stockholm Arlanda (ARN)' }}"
+           placeholder="Enter city or airport" />
+    <datalist id="origin_code-list"></datalist>
+  </div>
 
-    <!-- To -->
-    <div class="mb-3">
-      <label for="destination_code" class="form-label">To</label>
-      <input type="text" class="form-control" id="destination_code" name="destination_code"
-             list="destination_code-list"
-             value="{{ form_data.destination_code if form_data else 'London Heathrow (LHR)' }}"
-             placeholder="Enter city or airport" />
-      <datalist id="destination_code-list"></datalist>
-    </div>
+  <!-- To -->
+  <div class="mb-3">
+    <label for="destination_code" class="form-label">To</label>
+    <input type="text" class="form-control" id="destination_code" name="destination_code"
+           list="destination_code-list"
+           value="{{ form_data.destination_code if form_data else 'London Heathrow (LHR)' }}"
+           placeholder="Enter city or airport" />
+    <datalist id="destination_code-list"></datalist>
+  </div>
 
-    <!-- Trip Type -->
-    <div class="mb-3">
-      <label class="form-label" for="trip_type">🧭 Trip Type</label>
-      <select id="trip_type" name="trip_type" class="form-select" required>
-        <option value="one-way" {% if form_data and form_data.trip_type == 'one-way' %}selected{% endif %}>One-way</option>
-        <option value="round-trip" {% if not form_data or form_data.trip_type == 'round-trip' %}selected{% endif %}>Round-trip</option>
-        <option value="multi-city" {% if form_data and form_data.trip_type == 'multi-city' %}selected{% endif %}>Multi-city</option>
-      </select>
-    </div>
+  <!-- Trip Type -->
+  <div class="mb-3">
+    <label class="form-label" for="trip_type">🧭 Trip Type</label>
+    <select id="trip_type" name="trip_type" class="form-select" required>
+      <option value="one-way" {% if form_data and form_data.trip_type == 'one-way' %}selected{% endif %}>One-way</option>
+      <option value="round-trip" {% if not form_data or form_data.trip_type == 'round-trip' %}selected{% endif %}>Round-trip</option>
+      <option value="multi-city" {% if form_data and form_data.trip_type == 'multi-city' %}selected{% endif %}>Multi-city</option>
+    </select>
+  </div>
 
-    <!-- Direct Flights Only -->
-    <div class="form-check mb-3">
-      <input class="form-check-input" type="checkbox" id="direct_only" name="direct_only"
-             {% if form_data and form_data.direct_only %}checked{% endif %}>
-      <label class="form-check-label" for="direct_only">🛫 Show only direct flights</label>
-    </div>
+  <!-- Direct Flights Only -->
+  <div class="form-check mb-3">
+    <input class="form-check-input" type="checkbox" id="direct_only" name="direct_only"
+           {% if form_data and form_data.direct_only %}checked{% endif %}>
+    <label class="form-check-label" for="direct_only">🛫 Show only direct flights</label>
+  </div>
 
-    <div class="form-group">
-      <label>Trip Type:</label><br>
-  <label>
-    <input type="radio" name="trip_type" value="one-way" checked>
-    One-way
-  </label>
-  <label style="margin-left: 20px;">
-    <input type="radio" name="trip_type" value="round-trip">
-    Round-trip
-  </label>
-</div>
 
-    <!-- Departure Date -->
-    <div class="mb-3">
-      <label class="form-label" for="date_from">📅 Depart</label>
-      <input type="date" id="date_from" name="date_from" class="form-control" required
-             value="{{ session.last_search.departure if session.last_search else form_data.date_from if form_data else '2025-12-10' }}">
-    </div>
-<!-- Return Date -->
+  <!-- Departure Date -->
+  <div class="mb-3">
+    <label class="form-label" for="date_from">📅 Depart</label>
+    <input type="date" id="date_from" name="date_from" class="form-control" required
+           value="{{ session.last_search.departure if session.last_search else form_data.date_from if form_data else '2025-12-10' }}">
+  </div>
+ - 
+
+ 
+
+ <!-- Return Date -->
 <div class="mb-3" id="returnDateGroup"
      style="{% if form_data and form_data.trip_type == 'one-way' %}display:none;{% endif %}">
   <label class="form-label" for="date_to">📅 Return</label>
   <input type="date" id="date_to" name="date_to" class="form-control"
-         value="{% if session.last_search and session.last_search.return %}
-                   {{ session.last_search.return }}
-                {% elif form_data and form_data.date_to %}
-                   {{ form_data.date_to }}
-                {% else %}
-                   2025-12-17
-                {% endif %}"
+         value="{{ session.last_search.return if session.last_search else form_data.date_to if form_data else '2025-12-17' }}"
          {% if not form_data or form_data.trip_type == 'round-trip' %}required{% endif %}>
 </div>
 
-    <!-- Passengers -->
-    <div class="mb-3">
-      <label class="form-label" for="passengers">👥 Passengers</label>
-      <input type="number" id="passengers" name="passengers" class="form-control" min="1" required
-             value="{{ form_data.passengers if form_data else 1 }}">
-    </div>
+  <!-- Passengers -->
+  <div class="mb-3">
+    <label class="form-label" for="passengers">👥 Passengers</label>
+    <input type="number" id="passengers" name="passengers" class="form-control" min="1" required
+           value="{{ form_data.passengers if form_data else 1 }}">
+  </div>
 
-    <!-- Cabin Class -->
-    <div class="mb-3">
-      <label class="form-label" for="cabin_class">💺 Cabin Class</label>
-      <select id="cabin_class" name="cabin_class" class="form-select" required>
-        <option value="economy" {% if not form_data or form_data.cabin_class == 'economy' %}selected{% endif %}>Economy</option>
-        <option value="business" {% if form_data and form_data.cabin_class == 'business' %}selected{% endif %}>Business</option>
-        <option value="first" {% if form_data and form_data.cabin_class == 'first' %}selected{% endif %}>First</option>
-      </select>
-    </div>
+  <!-- Cabin Class -->
+  <div class="mb-3">
+    <label class="form-label" for="cabin_class">💺 Cabin Class</label>
+    <select id="cabin_class" name="cabin_class" class="form-select" required>
+      <option value="economy" {% if not form_data or form_data.cabin_class == 'economy' %}selected{% endif %}>Economy</option>
+      <option value="business" {% if form_data and form_data.cabin_class == 'business' %}selected{% endif %}>Business</option>
+      <option value="first" {% if form_data and form_data.cabin_class == 'first' %}selected{% endif %}>First</option>
+    </select>
+  </div>
 
-    <!-- Max Flights -->
-    <div class="mb-3">
-      <label for="limit" class="form-label">Max Flights to Show</label>
-      <select class="form-select" name="limit" id="limit">
-        <option value="8" {% if form_data.limit == "8" %}selected{% endif %}>8</option>
-        <option value="16" {% if form_data.limit == "16" %}selected{% endif %}>16</option>
-        <option value="32" {% if form_data.limit == "32" %}selected{% endif %}>32</option>
-      </select>
-    </div>
+  <!-- Max Flights -->
+  <div class="mb-3">
+    <label for="limit" class="form-label">Max Flights to Show</label>
+    <select class="form-select" name="limit" id="limit">
+      <option value="8" {% if form_data.limit == "8" %}selected{% endif %}>8</option>
+      <option value="16" {% if form_data.limit == "16" %}selected{% endif %}>16</option>
+      <option value="32" {% if form_data.limit == "32" %}selected{% endif %}>32</option>
+    </select>
+  </div>
 
-    <!-- Loading Spinner -->
-    <div id="loading" class="text-center mb-3" style="display:none;">
-      <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;">
-        <span class="visually-hidden">Loading...</span>
-      </div>
-      <p class="mt-2">🔄 Searching flights… hang tight!</p>
+  <!-- Loading Spinner -->
+  <div id="loading" class="text-center mb-3" style="display:none;">
+    <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;">
+      <span class="visually-hidden">Loading...</span>
     </div>
+    <p class="mt-2">🔄 Searching flights… hang tight!</p>
+  </div>
 
-    <button type="submit" class="btn btn-primary">Search Flights</button>
-  </form>
+  <button type="submit" class="btn btn-primary">Search Flights</button>
+</form>
+
 
   {% if flights %}
   <div class="mt-5">
@@ -154,6 +142,7 @@
 
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 {% raw %}
+
 <script>
 $(document).ready(function() {
   // ✈️ Autocomplete setup
@@ -194,11 +183,11 @@ $(document).ready(function() {
     });
   }
 
-  // 🔁 Trip type toggle logic
-  const tripTypeRadios = document.querySelectorAll('input[name="trip_type"]');
+  // 🔁 Trip type toggle logic (dropdown-based)
+  const tripTypeSelect = document.getElementById("trip_type");
   const toggleReturnFields = () => {
-    const selected = document.querySelector('input[name="trip_type"]:checked');
-    if (selected && selected.value === "one-way") {
+    const selected = tripTypeSelect.value;
+    if (selected === "one-way") {
       returnDateGroup.style.display = "none";
       dateTo.required = false;
       dateTo.value = ""; // ✅ Clear value to avoid backend validation
@@ -206,17 +195,12 @@ $(document).ready(function() {
       returnDateGroup.style.display = "block";
       dateTo.required = true;
       if (!dateTo.value) {
-        const today = new Date();
-        const defaultReturn = new Date(today);
-        defaultReturn.setDate(today.getDate() + 7); // 7 days later
-        dateTo.value = defaultReturn.toISOString().split("T")[0]; // ✅ Dynamic default
-      }
+         dateTo.value = "2025-12-17"; // ✅ Restore original default
+        }
     }
   };
 
-  tripTypeRadios.forEach(radio => {
-    radio.addEventListener("change", toggleReturnFields);
-  });
+  tripTypeSelect.addEventListener("change", toggleReturnFields);
   toggleReturnFields(); // ✅ Run on page load
 
   // ⏳ Loading spinner on submit
