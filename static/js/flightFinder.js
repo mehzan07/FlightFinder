@@ -1,4 +1,3 @@
-// Deep link builder function
 function buildAviasalesSearchLink(
   origin,
   destination,
@@ -15,37 +14,9 @@ function buildAviasalesSearchLink(
 
   return `https://www.aviasales.com/search/${searchPath}`;
 }
-
-document.addEventListener("DOMContentLoaded", () => {
-  const form = document.getElementById("searchForm");
-
-  if (form) {
-    form.addEventListener("submit", (e) => {
-      e.preventDefault();
-
-      const origin = document.getElementById("origin").value.trim();
-      const destination = document.getElementById("destination").value.trim();
-      const dateFrom = document.getElementById("date_from").value;
-      const dateTo = document.getElementById("date_to").value;
-
-      const deepLink = buildAviasalesSearchLink(
-        origin,
-        destination,
-        dateFrom,
-        dateTo,
-      );
-
-      console.log("Generated deep link:", deepLink);
-
-      // TEMP: Open the link in a new tab to verify
-      window.open(deepLink, "_blank");
-
-      // LATER: Replace with API call or render results in your UI
-    });
-  }
-});
-
 $(document).ready(function () {
+  console.log("flightFinder.js loaded");
+
   // ✈️ Autocomplete setup
   function setupAirportAutocomplete(inputId) {
     $("#" + inputId).on("input", function () {
@@ -84,40 +55,62 @@ $(document).ready(function () {
     });
   }
 
-  // 🔁 Trip type toggle logic (dropdown-based)
+  // 🔁 Trip type toggle logic
   const tripTypeSelect = document.getElementById("trip_type");
   const toggleReturnFields = () => {
     const selected = tripTypeSelect.value;
     if (selected === "one-way") {
       returnDateGroup.style.display = "none";
       dateTo.required = false;
-      dateTo.value = ""; // ✅ Clear value to avoid backend validation
+      dateTo.value = "";
     } else {
       returnDateGroup.style.display = "block";
       dateTo.required = true;
       if (!dateTo.value) {
-        dateTo.value = "2025-12-17"; // ✅ Restore original default
+        dateTo.value = "2025-12-17";
       }
     }
   };
 
   tripTypeSelect.addEventListener("change", toggleReturnFields);
-  toggleReturnFields(); // ✅ Run on page load
+  toggleReturnFields();
 
-  // ⏳ Loading spinner on submit
-  const form = document.querySelector("form");
+  // ✅ Unified form submit handler
+  const form = document.getElementById("searchForm");
   const loading = document.getElementById("loading");
+
   if (form) {
-    form.addEventListener("submit", (event) => {
-      event.preventDefault();
+    form.addEventListener("submit", (e) => {
+      e.preventDefault();
+
+      const extractIATA = (value) => {
+        const match = value.match(/\((\w{3})\)$/);
+        return match ? match[1] : value.trim();
+      };
+
+      const origin = extractIATA(document.getElementById("origin_code").value);
+      const destination = extractIATA(
+        document.getElementById("destination_code").value,
+      );
+
+      const dateFrom = document.getElementById("date_from").value;
+      const dateTo = document.getElementById("date_to").value;
+
+      const deepLink = buildAviasalesSearchLink(
+        origin,
+        destination,
+        dateFrom,
+        dateTo,
+      );
+      console.log("Form submitted");
+      console.log("Generated deep link:", deepLink);
+
       if (loading) {
         loading.style.display = "block";
-        setTimeout(() => {
-          form.submit();
-        }, 500);
-      } else {
-        form.submit(); // ✅ fallback
       }
+
+      // ✅ Replace this with fetch/render logic later
+      window.open(deepLink, "_blank");
     });
   }
 });
