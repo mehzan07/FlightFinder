@@ -1,10 +1,12 @@
 from flask import Blueprint, redirect, render_template, request, jsonify, url_for,session
+import requests
 from travel import travel_chatbot
 from datetime import datetime
 from config import DEBUG_MODE, FEATURED_FLIGHT_LIMIT
 import json
 from database import db
 import traceback
+import os
 
 
 from utils import extract_travel_entities
@@ -23,6 +25,10 @@ from db import save_booking
 from config import get_logger
 logger = get_logger(__name__)
 
+import urllib.parse
+from dotenv import load_dotenv
+load_dotenv()
+
 
 offers_db = {}
 travel_bp = Blueprint("travel", __name__) 
@@ -35,7 +41,7 @@ def format_datetime(dt_str):
         return "Not available"
     
     
-    
+    # === Travel UI Route this is the main entry point to display the travel form and handle submissions ===
     
 @travel_bp.route("/travel-ui", methods=["GET", "POST"])
 def travel_ui():
@@ -164,6 +170,85 @@ def travel_ui():
     return render_template("travel_form.html", form_data=form_data, flights=flights, errors=errors)
 
 
+#=== Helper Functions ===
+
+def extract_iata(value):
+    """
+    Extracts the IATA code from a string like 'Stockholm Arlanda (ARN)' → 'ARN'
+    """
+    if "(" in value and ")" in value:
+        return value.split("(")[-1].replace(")", "").strip()
+    return value.strip()
+
+# Processing the form and displays the results (list of flights )
+
+@travel_bp.route("/search-flights", methods=["POST"])
+def search_flights():
+    # Extract form data
+    origin = extract_iata(request.form.get("origin_code"))
+    destination = extract_iata(request.form.get("destination_code"))
+    
+    depart_date = request.form.get("date_from")
+    return_date = request.form.get("date_to")
+
+    # Format date to DDMM
+    def format_ddmm(date_str):
+        return datetime.strptime(date_str, "%Y-%m-%d").strftime("%d%m")
+
+    # Build Aviasales deeplink
+    deeplink = f"https://www.aviasales.com/search/{origin}{format_ddmm(depart_date)}{destination}"
+    if return_date:
+        deeplink += format_ddmm(return_date)
+
+    # Convert to affiliate link using your marker
+    encoded_url = urllib.parse.quote(deeplink)
+    
+    
+#     affiliate_link = (
+#     f"https://tp.media/content?"
+#     f"promo_id=1001"
+#     f"&shmarker={os.getenv('AFFILIATE_MARKER')}"
+#     f"&target_url={encoded_url}"
+# )
+    
+
+    affiliate_link = f"{deeplink}?marker={os.getenv('AFFILIATE_MARKER')}"
+
+
+    # Render results page with the deeplink
+    return render_template(
+        "search_results.html",
+        origin=origin,
+        destination=destination,
+        depart_date=depart_date,
+        return_date=return_date,
+        deeplink=affiliate_link
+    )
+    response = requests.get("https://api.travelpayouts.com/v2/prices/latest", params={
+        "origin": origin,
+        "destination": destination,
+        "depart_date": depart_date,
+        "return_date": return_date,
+        "currency": "EUR",
+        "token": os.getenv("API_TOKEN"),
+        "limit": limit
+    })
+
+    flight_data = response.json()
+
+    return render_template(
+        "search_results.html",
+        flights=flight_data.get("data", []),
+        currency=flight_data.get("currency", "EUR"),
+        origin=origin,
+        destination=destination,
+        depart_date=depart_date,
+        return_date=return_date,
+        direct_only=direct_only,
+        passengers=passengers,
+        cabin_class=cabin_class
+    )
+    
 
 
 @travel_bp.route("/offer/<offer_id>")
@@ -331,8 +416,37 @@ def home_page():
     return redirect(url_for("travel.flightfinder"))
 
 
-# === Primary FlightFinder Route ===
+@travel_bp.route("/search-flights", methods=["POST"])
+def search_flights_api():
+    data = request.get_json()
+    origin = data.get("origin")
+    destination = data.get("destination")
+    depart_date = data.get("dateFrom")
+    return_date = data.get("dateTo")
 
+    # Optional: passengers, cabin_class, etc.
+
+    params = {
+        "origin": origin,
+        "destination": destination,
+        "depart_date": depart_date,
+        "return_date": return_date,
+        "currency": "EUR",
+        "token": os.getenv("API_TOKEN")
+    }
+
+    try:
+        response = requests.get("https://api.travelpayouts.com/v2/prices/latest", params=params)
+        response.raise_for_status()
+        return jsonify(response.json())
+    except requests.RequestException as e:
+        print("API request failed:", e)
+        return jsonify({"error": "Flight search failed"}), 500
+
+
+
+
+# === Primary FlightFinder Route ===
 
 @travel_bp.route("/flightfinder", methods=["GET", "POST"])
 def flightfinder():

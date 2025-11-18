@@ -110,7 +110,55 @@ $(document).ready(function () {
       }
 
       // ✅ Replace this with fetch/render logic later
-      window.open(deepLink, "_blank");
-    });
+      // window.open(deepLink, "_blank");
+
+//       fetch("/search-flights", {
+//         method: "POST",
+//         headers: { "Content-Type": "application/json" },
+//         body: JSON.stringify({
+//           origin,
+//           destination,
+//           dateFrom,
+//           dateTo,
+//         }),
+//       })
+//         .then((res) => res.json())
+//         .then((data) => {
+//           console.log("Flight results:", JSON.stringify(data, null, 2));
+//           renderFlightResults(data);
+//         })
+//         .catch((err) => {
+//           console.error("Flight search failed:", err);
+//           document.getElementById("results").innerHTML =
+//             "<p>😕 Flight search failed. Try again later.</p>";
+//         });
+//     });
+//   }
+// });
+
+function renderFlightResults(data) {
+  const container = document.getElementById("results");
+  container.innerHTML = "<p>✅ Rendering started</p>";
+
+  if (!data || !data.data || data.data.length === 0) {
+    container.innerHTML += "<p>😕 No flights found.</p>";
+    return;
   }
-});
+
+  console.table(data.data); // ✅ Easier to inspect in DevTools
+
+  data.data.forEach((flight) => {
+    const card = document.createElement("div");
+    card.className = "flight-card p-3 mb-3 border rounded";
+
+    card.innerHTML = `
+      <h5>Destination: ${flight.destination || "Unknown"}</h5>
+      <p>🛫 Depart: ${flight.depart_date || "N/A"}</p>
+      <p>⏱ Duration: ${flight.duration || "?"} mins</p>
+      <p>📏 Distance: ${flight.distance || "?"} km</p>
+      <p>✅ Actual: ${flight.actual ? "Yes" : "No"}</p>
+    `;
+
+    container.appendChild(card);
+  });
+}

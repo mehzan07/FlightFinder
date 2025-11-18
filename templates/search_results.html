@@ -1,0 +1,14 @@
+{% extends 'base.html' %}
+{% block content %}
+  <div class="container mt-5">
+    <h2 class="mb-4">🛫 Available Flights</h2>
+    <div class="card p-4 shadow-sm">
+      <p>✅ Your search is ready. Click below to view real-time results on Aviasales:</p>
+      <a href="{{ deeplink }}" class="btn btn-primary" target="_blank">🔎 View Flights & Book</a>
+    </div>
+
+    <div class="mt-4">
+      <a href="/travel-ui" class="btn btn-outline-secondary">🔙 Back to Search</a>
+    </div>
+  </div>
+{% endblock %}

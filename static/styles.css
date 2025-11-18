@@ -32,3 +32,9 @@
   font-size: 1.2rem;
   color: #555;
 }
+
+#results {
+  display: block;
+  padding: 1rem;
+  border: 2px dashed #ccc;
+}

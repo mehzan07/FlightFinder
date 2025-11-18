@@ -1,4 +1,4 @@
-    {% extends "base.html" %}
+{% extends "base.html" %}
 {% block content %}
 
 <div class="container mt-5" style="background: linear-gradient(to right, #e0f7fa, #fff);">
@@ -16,134 +16,101 @@
   </div>
   {% endif %}
 
- <form id="searchForm" method="POST" action="/travel-ui" class="card p-4 shadow-sm">
-  <!-- From -->
-  <div class="mb-3">
-    <label for="origin_code" class="form-label">From</label>
-    <input type="text" class="form-control" id="origin_code" name="origin_code"
-          list="origin_code-list"
-            value="{% if form_data %}{{ form_data.origin_code }}{% else %}Stockholm Arlanda (ARN){% endif %}"
-            placeholder="Enter city or airport" />
-    <datalist id="origin_code-list"></datalist>
-  </div>
+  <form id="searchForm" method="POST" action="/search-flights" class="card p-4 shadow-sm">
 
-  <!-- To -->
-  <div class="mb-3">
-    <label for="destination_code" class="form-label">To</label>
-    <input type="text" class="form-control" id="destination_code" name="destination_code"
-           list="destination_code-list"
-           value="{{ form_data.destination_code if form_data else 'London Heathrow (LHR)' }}"
-           placeholder="Enter city or airport" />
-    <datalist id="destination_code-list"></datalist>
-  </div>
-
-  <!-- Trip Type -->
-  <div class="mb-3">
-    <label class="form-label" for="trip_type">🧭 Trip Type</label>
-    <select id="trip_type" name="trip_type" class="form-select" required>
-      <option value="one-way" {% if form_data and form_data.trip_type == 'one-way' %}selected{% endif %}>One-way</option>
-      <option value="round-trip" {% if not form_data or form_data.trip_type == 'round-trip' %}selected{% endif %}>Round-trip</option>
-      <option value="multi-city" {% if form_data and form_data.trip_type == 'multi-city' %}selected{% endif %}>Multi-city</option>
-    </select>
-  </div>
-
-  <!-- Direct Flights Only -->
-  <div class="form-check mb-3">
-    <input class="form-check-input" type="checkbox" id="direct_only" name="direct_only"
-           {% if form_data and form_data.direct_only %}checked{% endif %}>
-    <label class="form-check-label" for="direct_only">🛫 Show only direct flights</label>
-  </div>
-
-
-  <!-- Departure Date -->
-  <div class="mb-3">
-    <label class="form-label" for="date_from">📅 Depart</label>
-    <input type="date" id="date_from" name="date_from" class="form-control" required
-           value="{{ session.last_search.departure if session.last_search else form_data.date_from if form_data else '2025-12-10' }}">
-  </div>
- - 
-
- 
-
- <!-- Return Date -->
-<div class="mb-3" id="returnDateGroup"
-     style="{% if form_data and form_data.trip_type == 'one-way' %}display:none;{% endif %}">
-  <label class="form-label" for="date_to">📅 Return</label>
-  <input type="date" id="date_to" name="date_to" class="form-control"
-         value="{{ session.last_search.return if session.last_search else form_data.date_to if form_data else '2025-12-17' }}"
-         {% if not form_data or form_data.trip_type == 'round-trip' %}required{% endif %}>
-</div>
-
-  <!-- Passengers -->
-  <div class="mb-3">
-    <label class="form-label" for="passengers">👥 Passengers</label>
-    <input type="number" id="passengers" name="passengers" class="form-control" min="1" required
-           value="{{ form_data.passengers if form_data else 1 }}">
-  </div>
-
-  <!-- Cabin Class -->
-  <div class="mb-3">
-    <label class="form-label" for="cabin_class">💺 Cabin Class</label>
-    <select id="cabin_class" name="cabin_class" class="form-select" required>
-      <option value="economy" {% if not form_data or form_data.cabin_class == 'economy' %}selected{% endif %}>Economy</option>
-      <option value="business" {% if form_data and form_data.cabin_class == 'business' %}selected{% endif %}>Business</option>
-      <option value="first" {% if form_data and form_data.cabin_class == 'first' %}selected{% endif %}>First</option>
-    </select>
-  </div>
-
-  <!-- Max Flights -->
-  <div class="mb-3">
-    <label for="limit" class="form-label">Max Flights to Show</label>
-    <select class="form-select" name="limit" id="limit">
-      <option value="8" {% if form_data.limit == "8" %}selected{% endif %}>8</option>
-      <option value="16" {% if form_data.limit == "16" %}selected{% endif %}>16</option>
-      <option value="32" {% if form_data.limit == "32" %}selected{% endif %}>32</option>
-    </select>
-  </div>
-
-  <!-- Loading Spinner -->
-  <div id="loading" class="text-center mb-3" style="display:none;">
-    <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;">
-      <span class="visually-hidden">Loading...</span>
+    <!-- From -->
+    <div class="mb-3">
+      <label for="origin_code" class="form-label">From</label>
+      <input type="text" class="form-control" id="origin_code" name="origin_code"
+             list="origin_code-list"
+             value="{% if form_data %}{{ form_data.origin_code }}{% else %}Stockholm Arlanda (ARN){% endif %}"
+             placeholder="Enter city or airport" />
+      <datalist id="origin_code-list"></datalist>
     </div>
-    <p class="mt-2">🔄 Searching flights… hang tight!</p>
-  </div>
 
-  <button type="submit" class="btn btn-primary">Search Flights</button>
-</form>
+    <!-- To -->
+    <div class="mb-3">
+      <label for="destination_code" class="form-label">To</label>
+      <input type="text" class="form-control" id="destination_code" name="destination_code"
+             list="destination_code-list"
+             value="{{ form_data.destination_code if form_data else 'London Heathrow (LHR)' }}"
+             placeholder="Enter city or airport" />
+      <datalist id="destination_code-list"></datalist>
+    </div>
 
+    <!-- Trip Type -->
+    <div class="mb-3">
+      <label class="form-label" for="trip_type">🧭 Trip Type</label>
+      <select id="trip_type" name="trip_type" class="form-select" required>
+        <option value="one-way" {% if form_data and form_data.trip_type == 'one-way' %}selected{% endif %}>One-way</option>
+        <option value="round-trip" {% if not form_data or form_data.trip_type == 'round-trip' %}selected{% endif %}>Round-trip</option>
+        <option value="multi-city" {% if form_data and form_data.trip_type == 'multi-city' %}selected{% endif %}>Multi-city</option>
+      </select>
+    </div>
 
-  {% if flights %}
-  <div class="mt-5">
-    <h4>🛫 Available Flights</h4>
-    <div class="row">
-      {% for flight in flights %}
-      <div class="col-md-6">
-        <div class="card mb-3 shadow-sm">
-          <div class="card-body">
-            <h5 class="card-title">{{ flight.airline }}</h5>
-            <p class="card-text">
-              {{ flight.depart }}{% if flight.return %} → {{ flight.return }}{% endif %}<br>
-              Price: €{{ flight.price }}
-            </p>
-            {% if flight.link %}
-              <a href="{{ flight.link }}" class="btn btn-outline-primary" target="_blank">Book Now</a>
-            {% else %}
-              <span class="text-muted">No booking link available</span>
-            {% endif %}
-          </div>
-        </div>
+    <!-- Direct Flights Only -->
+    <div class="form-check mb-3">
+      <input class="form-check-input" type="checkbox" id="direct_only" name="direct_only"
+             {% if form_data and form_data.direct_only %}checked{% endif %}>
+      <label class="form-check-label" for="direct_only">🛫 Show only direct flights</label>
+    </div>
+
+    <!-- Departure Date -->
+    <div class="mb-3">
+      <label class="form-label" for="date_from">📅 Depart</label>
+      <input type="date" id="date_from" name="date_from" class="form-control" required
+             value="{{ session.last_search.departure if session.last_search else form_data.date_from if form_data else '2025-12-10' }}">
+    </div>
+
+    <!-- Return Date -->
+    <div class="mb-3" id="returnDateGroup"
+         style="{% if form_data and form_data.trip_type == 'one-way' %}display:none;{% endif %}">
+      <label class="form-label" for="date_to">📅 Return</label>
+      <input type="date" id="date_to" name="date_to" class="form-control"
+             value="{{ session.last_search.return if session.last_search else form_data.date_to if form_data else '2025-12-17' }}"
+             {% if not form_data or form_data.trip_type == 'round-trip' %}required{% endif %}>
+    </div>
+
+    <!-- Passengers -->
+    <div class="mb-3">
+      <label class="form-label" for="passengers">👥 Passengers</label>
+      <input type="number" id="passengers" name="passengers" class="form-control" min="1" required
+             value="{{ form_data.passengers if form_data else 1 }}">
+    </div>
+
+    <!-- Cabin Class -->
+    <div class="mb-3">
+      <label class="form-label" for="cabin_class">💺 Cabin Class</label>
+      <select id="cabin_class" name="cabin_class" class="form-select" required>
+        <option value="economy" {% if not form_data or form_data.cabin_class == 'economy' %}selected{% endif %}>Economy</option>
+        <option value="business" {% if form_data and form_data.cabin_class == 'business' %}selected{% endif %}>Business</option>
+        <option value="first" {% if form_data and form_data.cabin_class == 'first' %}selected{% endif %}>First</option>
+      </select>
+    </div>
+
+    <!-- Max Flights -->
+    <div class="mb-3">
+      <label for="limit" class="form-label">Max Flights to Show</label>
+      <select class="form-select" name="limit" id="limit">
+        <option value="8" {% if form_data.limit == "8" %}selected{% endif %}>8</option>
+        <option value="16" {% if form_data.limit == "16" %}selected{% endif %}>16</option>
+        <option value="32" {% if form_data.limit == "32" %}selected{% endif %}>32</option>
+      </select>
+    </div>
+
+    <!-- Loading Spinner -->
+    <div id="loading" class="text-center mb-3" style="display:none;">
+      <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;">
+        <span class="visually-hidden">Loading...</span>
       </div>
-      {% endfor %}
+      <p class="mt-2">🔄 Searching flights… hang tight!</p>
     </div>
-  </div>
-  {% endif %}
+
+    <button type="submit" class="btn btn-primary">Search Flights</button>
+  </form>
 </div>
 
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-
-
 <script src="/static/js/flightFinder.js"></script>
 
 {% endblock %}
-
