@@ -21,6 +21,9 @@ from travel import generate_booking_reference
 from models import Booking
 from db import save_booking
 
+from utils import get_affiliate_link  # if modularized
+from utils import extract_iata
+
 
 from config import get_logger
 logger = get_logger(__name__)
@@ -170,28 +173,14 @@ def travel_ui():
     return render_template("travel_form.html", form_data=form_data, flights=flights, errors=errors)
 
 
-#=== Helper Functions ===
-
-def extract_iata(value):
-    """
-    Extracts the IATA code from a string like 'Stockholm Arlanda (ARN)' → 'ARN'
-    """
-    if "(" in value and ")" in value:
-        return value.split("(")[-1].replace(")", "").strip()
-    return value.strip()
-
-# Processing the form and displays the results (list of flights )
 
 @travel_bp.route("/search-flights", methods=["POST"])
 def search_flights():
-    # Extract form data
     origin = extract_iata(request.form.get("origin_code"))
     destination = extract_iata(request.form.get("destination_code"))
-    
     depart_date = request.form.get("date_from")
     return_date = request.form.get("date_to")
 
-    # Format date to DDMM
     def format_ddmm(date_str):
         return datetime.strptime(date_str, "%Y-%m-%d").strftime("%d%m")
 
@@ -200,22 +189,9 @@ def search_flights():
     if return_date:
         deeplink += format_ddmm(return_date)
 
-    # Convert to affiliate link using your marker
-    encoded_url = urllib.parse.quote(deeplink)
-    
-    
-#     affiliate_link = (
-#     f"https://tp.media/content?"
-#     f"promo_id=1001"
-#     f"&shmarker={os.getenv('AFFILIATE_MARKER')}"
-#     f"&target_url={encoded_url}"
-# )
-    
+    # Wrap with affiliate marker
+    affiliate_link = get_affiliate_link(deeplink)
 
-    affiliate_link = f"{deeplink}?marker={os.getenv('AFFILIATE_MARKER')}"
-
-
-    # Render results page with the deeplink
     return render_template(
         "search_results.html",
         origin=origin,
@@ -224,6 +200,11 @@ def search_flights():
         return_date=return_date,
         deeplink=affiliate_link
     )
+
+
+
+# Processing the form and displays the results (list of flights )
+
     response = requests.get("https://api.travelpayouts.com/v2/prices/latest", params={
         "origin": origin,
         "destination": destination,

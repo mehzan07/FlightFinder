@@ -8,6 +8,12 @@ import dateparser
 from word2number import w2n
 import spacy
 
+import os
+import requests
+from dotenv import load_dotenv
+
+load_dotenv()
+
 logger = logging.getLogger(__name__)
 nlp = spacy.load("en_core_web_sm")
 
@@ -102,3 +108,25 @@ def extract_travel_entities(user_input: str) -> Dict[str, Any]:
 def generate_flight_id(link: str, airline: str, departure: datetime) -> str:
     raw = f"{link}-{airline}-{departure}"
     return hashlib.md5(raw.encode()).hexdigest()
+
+
+
+def get_affiliate_link(deeplink):
+    """
+    Safely wrap the Aviasales deeplink with your affiliate marker.
+    """
+    marker = os.getenv("AFFILIATE_MARKER")
+    return f"{deeplink}?marker={marker}"
+
+
+
+#=== Helper Functions ===
+
+def extract_iata(value):
+    """
+    Extracts the IATA code from a string like 'Stockholm Arlanda (ARN)' → 'ARN'
+    """
+    if "(" in value and ")" in value:
+        return value.split("(")[-1].replace(")", "").strip()
+    return value.strip()
+
