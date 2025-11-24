@@ -130,3 +130,22 @@ def extract_iata(value):
         return value.split("(")[-1].replace(")", "").strip()
     return value.strip()
 
+
+def build_flight_deeplink(flight, marker):
+    """
+    Build an Aviasales deeplink for a specific flight result.
+    Dates must be formatted as DDMM.
+    """
+    def format_ddmm(date_str):
+        return date_str[8:10] + date_str[5:7]  # YYYY-MM-DD → DDMM
+
+    origin = flight.get("origin")
+    destination = flight.get("destination")
+    depart_date = flight.get("depart_date")
+    return_date = flight.get("return_date")
+
+    deeplink = f"https://www.aviasales.com/search/{origin}{format_ddmm(depart_date)}{destination}"
+    if return_date:
+        deeplink += format_ddmm(return_date)
+
+    return f"{deeplink}?marker={marker}"

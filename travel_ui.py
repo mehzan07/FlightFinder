@@ -23,6 +23,7 @@ from db import save_booking
 
 from utils import get_affiliate_link  # if modularized
 from utils import extract_iata
+from utils import build_flight_deeplink
 
 
 from config import get_logger
@@ -174,61 +175,59 @@ def travel_ui():
 
 
 
+from flask import request, render_template
+import os, requests
+from datetime import datetime
+
+def format_ddmm(date_str):
+    """Convert YYYY-MM-DD to DDMM format for Aviasales deeplink."""
+    return date_str[8:10] + date_str[5:7]
+
+
 @travel_bp.route("/search-flights", methods=["POST"])
 def search_flights():
     origin = extract_iata(request.form.get("origin_code"))
     destination = extract_iata(request.form.get("destination_code"))
     depart_date = request.form.get("date_from")
     return_date = request.form.get("date_to")
+    limit = int(request.form.get("limit", 20))
 
-    def format_ddmm(date_str):
-        return datetime.strptime(date_str, "%Y-%m-%d").strftime("%d%m")
+    # Fetch cached flight prices
+    response = requests.get(
+        "https://api.travelpayouts.com/v2/prices/latest",
+        params={
+            "origin": origin,
+            "destination": destination,
+            "depart_date": depart_date,
+            "return_date": return_date,
+            "currency": "EUR",
+            "token": os.getenv("API_TOKEN"),
+            "limit": limit
+        },
+        timeout=10
+    )
+    data = response.json()
+    flights = data.get("data", [])
+    currency = data.get("currency", "EUR")
 
-    # Build Aviasales deeplink
-    deeplink = f"https://www.aviasales.com/search/{origin}{format_ddmm(depart_date)}{destination}"
-    if return_date:
-        deeplink += format_ddmm(return_date)
+    # Sort cheapest first
+    flights = sorted(flights, key=lambda f: f.get("value", float("inf")))
 
-    # Wrap with affiliate marker
-    affiliate_link = get_affiliate_link(deeplink)
+    # Add deeplink per flight
+    marker = os.getenv("AFFILIATE_MARKER", "")
+    for flight in flights:
+        flight["deeplink"] = build_flight_deeplink(flight, marker)
 
     return render_template(
         "search_results.html",
+        flights=flights,
+        currency=currency,
         origin=origin,
         destination=destination,
         depart_date=depart_date,
-        return_date=return_date,
-        deeplink=affiliate_link
+        return_date=return_date
     )
 
-
-
-# Processing the form and displays the results (list of flights )
-
-    response = requests.get("https://api.travelpayouts.com/v2/prices/latest", params={
-        "origin": origin,
-        "destination": destination,
-        "depart_date": depart_date,
-        "return_date": return_date,
-        "currency": "EUR",
-        "token": os.getenv("API_TOKEN"),
-        "limit": limit
-    })
-
-    flight_data = response.json()
-
-    return render_template(
-        "search_results.html",
-        flights=flight_data.get("data", []),
-        currency=flight_data.get("currency", "EUR"),
-        origin=origin,
-        destination=destination,
-        depart_date=depart_date,
-        return_date=return_date,
-        direct_only=direct_only,
-        passengers=passengers,
-        cabin_class=cabin_class
-    )
     
 
 
