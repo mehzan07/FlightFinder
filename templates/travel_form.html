@@ -92,9 +92,10 @@
     <div class="mb-3">
       <label for="limit" class="form-label">Max Flights to Show</label>
       <select class="form-select" name="limit" id="limit">
-        <option value="8" {% if form_data.limit == "8" %}selected{% endif %}>8</option>
-        <option value="16" {% if form_data.limit == "16" %}selected{% endif %}>16</option>
-        <option value="32" {% if form_data.limit == "32" %}selected{% endif %}>32</option>
+        <option value="4" {% if not form_data or form_data.limit == "4" %}selected{% endif %}>4</option>
+        <option value="8" {% if form_data and form_data.limit == "8" %}selected{% endif %}>8</option>
+        <option value="12" {% if form_data and form_data.limit == "12" %}selected{% endif %}>12</option>
+        <option value="16" {% if form_data and form_data.limit == "16" %}selected{% endif %}>16</option>
       </select>
     </div>
 
