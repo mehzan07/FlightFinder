@@ -515,8 +515,14 @@
                             <span>{{ flight.cabin_class or 'Economy' }}</span>
                         </div>
                         <div class="meta-item">
-                            <span class="meta-label">Vendor:</span>
-                            <span>{{ flight.vendor or 'Aviasales' }}</span>
+                            <span class="meta-label">Booking via:</span>
+                            <span>
+                                {% if flight.vendor == 'Amadeus' %}
+                                    🌟 Google Flights (Direct)
+                                {% else %}
+                                    📦 Multiple Partners
+                                {% endif %}
+                            </span>
                         </div>
                     </div>
 

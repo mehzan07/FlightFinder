@@ -1,21 +1,80 @@
+# flight_search.py:
 from datetime import datetime
 import requests
 import time
 import hashlib
 import json as json_module
+import traceback # ✅ FIX: Added missing import
 
 from config import get_logger
-logger = get_logger(__name__)
+logs = get_logger(__name__)
+# The logger instance is named 'logs' here, but 'logger' is used below.
+# Assuming 'logger = logs' is intended or implicit for the rest of the file.
+logger = logs # Added to prevent NameError if logs is not used later
 
 from config import AFFILIATE_MARKER, API_TOKEN, HOST, USER_IP, USE_REAL_API, FEATURED_FLIGHT_LIMIT, DEBUG_MODE
 
+from config import USE_AMADEUS, AMADEUS_API_KEY
 
-def search_flights(origin_code, destination_code, date_from_str, date_to_str, trip_type, adults=1, children=0, infants=0, cabin_class="economy", limit=None, direct_only=False):
+# Import Amadeus if available
+AMADEUS_AVAILABLE = False
+if USE_AMADEUS and AMADEUS_API_KEY:
+    try:
+        from amadeus_search import search_flights_amadeus
+        AMADEUS_AVAILABLE = True
+        logger.info("✅ Amadeus module loaded")
+    except ImportError as e:
+        logger.warning(f"Amadeus module not available: {e}")
+
+# At the very top, after imports
+FORCE_AMADEUS = True  # ✅ Add this line
+
+def search_flights(origin_code, destination_code, date_from_str, date_to_str, 
+                   trip_type, adults=1, children=0, infants=0, cabin_class="economy", 
+                   limit=None, direct_only=False):
     """Main entry point for flight search"""
+    
+    # Force Amadeus for debugging
+    if FORCE_AMADEUS:  # ✅ Change this line
+        logger.info("🔍 FORCING Amadeus API")
+        try:
+            from amadeus_search import search_flights_amadeus
+            flights = search_flights_amadeus(
+                origin=origin_code,
+                destination=destination_code,
+                date_from=date_from_str,
+                date_to=date_to_str,
+                trip_type=trip_type,
+                adults=adults,
+                children=children,
+                infants=infants,
+                cabin_class=cabin_class,
+                limit=limit,
+                direct_only=direct_only
+            )
+            
+            if flights:
+                logger.info(f"✅ Amadeus returned {len(flights)} flights")
+                return flights
+            else:
+                logger.warning("⚠️ Amadeus returned empty")
+        except Exception as e:
+            logger.error(f"❌ Amadeus ERROR: {e}")
+            import traceback # ✅ FIX: Typo corrected (was 'Import Traceback')
+            traceback.print_exc()
+    
+    # Original code continues...
+    
+    # Fallback to Travelpayouts
+    logger.info("🔍 Using Travelpayouts API")
     if USE_REAL_API:
         return search_flights_api(origin_code, destination_code, date_from_str, date_to_str, trip_type, adults, children, infants, cabin_class, limit=limit, direct_only=direct_only)
     else:
         return search_flights_mock(origin_code, destination_code, date_from_str, date_to_str, trip_type, limit=limit, direct_only=direct_only)
+
+
+# ... (rest of the file is unchanged)
+
 
 
 def map_cabin_class(cabin_class):

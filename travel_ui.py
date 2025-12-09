@@ -225,8 +225,8 @@ def travel_ui():
 # === Alternative Search Route (if your form posts here) ===
 @travel_bp.route("/search-flights", methods=["POST"])
 def search_flights():
-    """Alternative search endpoint - redirects to travel_ui with same data"""
-    logger.info("search_flights route hit - redirecting to travel_ui")
+    """Alternative search endpoint - uses hybrid Amadeus/Travelpayouts"""
+    logger.info("search_flights route hit")
     
     # Get form data
     origin = extract_iata(request.form.get("origin_code", ""))
@@ -244,9 +244,9 @@ def search_flights():
                              errors=["Please provide origin, destination, and departure date"],
                              form_data=request.form)
 
-    # Call the real search function
+    # ✅ IMPORTANT: Use the main search_flights function (which has Amadeus logic)
     try:
-        flights = search_flights_func(
+        flights = search_flights_func(  # This now tries Amadeus first!
             origin, 
             destination,
             depart_date,
@@ -256,7 +256,7 @@ def search_flights():
             children=0,
             infants=0,
             cabin_class=cabin_class,
-            limit=limit,  # Pass the limit correctly
+            limit=limit,
             direct_only=direct_only
         )
 
@@ -280,7 +280,7 @@ def search_flights():
             else:
                 flight["deeplink"] = flight.get("link") or flight.get("deeplink")
 
-        # IMPORTANT: Apply the limit here too (in case API returns more)
+        # Apply the limit here too (in case API returns more)
         flights = flights[:limit]
         
         logger.info(f"Returning {len(flights)} flights (limit: {limit})")

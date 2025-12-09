@@ -30,6 +30,13 @@ USER_IP = get_env_var("USER_IP")
 USE_REAL_API = get_env_var("USE_REAL_API").lower() == "true"
 
 
+# Amadeus configuration
+AMADEUS_API_KEY = os.getenv("AMADEUS_API_KEY")
+AMADEUS_API_SECRET = os.getenv("AMADEUS_API_SECRET")
+AMADEUS_BASE_URL = os.getenv("AMADEUS_BASE_URL", "https://test.api.amadeus.com")
+USE_AMADEUS = os.getenv("USE_AMADEUS", "False") == "True"
+
+
 # === Logging Configuration ===
 log_level = logging.DEBUG if DEBUG_MODE else logging.INFO
 
@@ -52,3 +59,11 @@ def get_logger(name):
 
 # Initialize logging when config is imported
 setup_logging()
+
+# At the bottom of config.py, add:
+if __name__ == "__main__":
+    print("Testing config loading...")
+    print(f"AMADEUS_API_KEY: {AMADEUS_API_KEY[:20] if AMADEUS_API_KEY else 'NOT SET'}...")
+    print(f"AMADEUS_API_SECRET: {AMADEUS_API_SECRET[:20] if AMADEUS_API_SECRET else 'NOT SET'}...")
+    print(f"AMADEUS_BASE_URL: {AMADEUS_BASE_URL}")
+    print(f"USE_AMADEUS: {USE_AMADEUS}")
