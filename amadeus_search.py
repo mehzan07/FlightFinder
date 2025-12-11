@@ -121,7 +121,7 @@ def search_flights_amadeus(
         params["returnDate"] = date_to
     
     # Filter for direct flights
-    if direct_only:
+    
         params["nonStop"] = "true"
     
     headers = {
@@ -150,7 +150,7 @@ def search_flights_amadeus(
         # Parse and format flights
         flights = []
         for offer in offers:
-            parsed = parse_amadeus_flight(offer, trip_type, origin, destination)
+            parsed = parse_amadeus_flight(offer, trip_type, origin, destination, direct_only )
             if parsed:
                 flights.append(parsed)
         
@@ -164,7 +164,7 @@ def search_flights_amadeus(
         return []
 
 
-def parse_amadeus_flight(offer: Dict, trip_type: str, origin: str, destination: str) -> Optional[Dict]:
+def parse_amadeus_flight(offer: Dict, trip_type: str, origin: str, destination: str, direct_only: bool) -> Optional[Dict]:
     """Parse Amadeus flight offer into our standard format"""
     try:
         # offer_id must be extracted for the unique MD5 ID generation
@@ -259,8 +259,10 @@ def parse_amadeus_flight(offer: Dict, trip_type: str, origin: str, destination: 
             booking_link += f"&airlines={carrier_code}"
         
         # Add direct flights filter if applicable
-        if stops == 0:
+        if direct_only:
             booking_link += "&transfers=0"
+            # Adding '&direct=true' is an important additional parameter to enforce the direct flight filter on the Aviasales server-side.
+            booking_link += "&direct=true"
         
         # Generate unique ID
         flight_id = hashlib.md5(
