@@ -364,6 +364,7 @@ def search_flights_api(origin_code, destination_code, date_from_str, date_to_str
                 # Add direct_only filter if requested
                 if direct_only:
                     booking_link += "&transfers=0"
+                    booking_link += "&direct=true"
                 
                 if DEBUG_MODE:
                     logger.info(f"🔨 Built manual link: {booking_link}")
@@ -472,8 +473,8 @@ def search_flights_api(origin_code, destination_code, date_from_str, date_to_str
     
     logger.info(f"🎯 Returning {len(featured_flights)} flights (from {len(filtered)} total)")
     
-    return featured_flights
-
+   # return featured_flights
+    return deep_link_map # <-- CHANGE: Return the map for matching!
 
 def search_flights_mock(origin_code, destination_code, date_from_str, date_to_str, trip_type, limit=None, direct_only=False):
     """Mock flight search for testing (uses mock_data.py)"""
