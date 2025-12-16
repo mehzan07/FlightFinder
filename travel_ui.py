@@ -609,25 +609,29 @@ def flight_results():
     # app.py (Example using Flask)
 from flask import Flask, request, redirect, url_for
 
-# ... (other code) ...
+# travel_ui.py (The function that handles the redirect)
+from flask import request, redirect
+# Note: Ensure you still have 'from urllib.parse import urlencode' 
+# or just 'from urllib.parse import urlencode' if you need it elsewhere, 
+# but it's not strictly needed for this modified redirect function.
 
-# This route captures any path that follows /search/
-# The <path:search_code> part captures the flight codes (ARN1202LHR1702)
 @travel_bp.route('/search/<path:search_code>')
-def redirect_to_external_search(search_code):
-    # 1. Capture all the query parameters (marker, adults, trip_class, etc.)
-    query_params = request.args
+def redirect_to_aviasales(search_code):
+    """
+    Handles the internal fallback search URL and redirects the user
+    to the external Aviasales site using the raw query string to avoid 400 errors.
+    """
     
-    # 2. Construct the full Aviasales/Travelpayouts external URL for the redirect
-    # This ensures that even though the deep link was empty, the fallback link 
-    # goes to the ultimate booking site (Aviasales, since the gate link was empty).
+    # 1. Capture the raw query string from the incoming request (e.g., 'marker=...&direct=true')
+    # This avoids any parsing issues Flask might have with individual arguments.
+    raw_query_string = request.query_string.decode('utf-8')
     
-    base_url = f"https://www.aviasales.com/search/{search_code}"
+    # 2. Construct the base external Aviasales URL
+    # We use the search_code captured from the path
+    base_external_url = f"https://www.aviasales.com/search/{search_code}"
     
-    # 3. Add all the query parameters back to the URL
-    full_external_url = f"{base_url}?{url_for(request.args)}"
+    # 3. Combine the base URL with the raw query string
+    full_external_url = f"{base_external_url}?{raw_query_string}"
 
     # 4. Redirect the user's browser to the external search URL
     return redirect(full_external_url, code=302)
-
-# ... (rest of your routes, like @app.route('/travel-ui')) ...

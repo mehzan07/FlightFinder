@@ -315,27 +315,29 @@ def search_flights_api(origin_code, destination_code, date_from_str, date_to_str
                 if trip_type == "round-trip" and date_to_str:
                     search_code += to_ddmm(date_to_str)
             
-            # 2. Collect all URL parameters into a dictionary
+
+            # 2. Collect all URL parameters into a dictionary (ENSURE ALL VALUES ARE STRINGS)
                 params = {
-                    "marker": AFFILIATE_MARKER,
-                    "adults": passengers['adults'],
-                    "children": passengers['children'],
-                    "infants": passengers['infants'],
-                    "trip_class": trip_class_code,
-                    "gate_id": gate_id,
-                }
+                "marker": AFFILIATE_MARKER,
+                "adults": str(passengers['adults']),     # Converted to string
+                "children": str(passengers['children']), # Converted to string
+                "infants": str(passengers['infants']),   # Converted to string
+                "trip_class": trip_class_code,           # Already a string
+                "gate_id": str(gate_id),                 # Converted to string
+            }
             
                 if direct_only:
-                    params["transfers"] = 0
-                    params["direct"] = "true" 
-            
+                 params["transfers"] = "0"   # Set as string "0"
+                 params["direct"] = "true"   # Already a string
+
             # 3. Encode parameters into a URL-safe string
-            # IMPORTANT: Ensure 'from urllib.parse import urlencode' is at the top of the file.
-                    query_string = urlencode(params)
+                query_string = urlencode(params)
+            
+            # ... (rest of the code) ...
 
                     # 4. Construct the final internal link using the encoded string
-                    booking_link = (
-                      f"http://{HOST}/search/{search_code}?{query_string}" 
+                booking_link = (
+                    f"http://{HOST}/search/{search_code}?{query_string}" 
                     )
 
             
