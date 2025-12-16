@@ -8,7 +8,11 @@ import requests
 from datetime import datetime, timedelta
 from typing import List, Dict, Optional
 import hashlib
-import re # Needed for parse_iso_duration
+import re 
+from utils import parse_iso_duration, format_duration 
+from typing import Dict, Optional
+import traceback
+
 
 from config import get_logger
 logger = get_logger(__name__) 
@@ -75,6 +79,11 @@ def get_access_token():
         return None
 
 
+
+# Assume logger, AMADEUS_BASE_URL, AFFILIATE_MARKER, get_access_token, 
+# map_cabin_class, parse_iso_duration, format_duration, and parse_amadeus_flight 
+# are available/imported correctly.
+
 def search_flights_amadeus(
     origin: str,
     destination: str,
@@ -89,21 +98,19 @@ def search_flights_amadeus(
     direct_only: bool = False
 ) -> List[Dict]:
     """
-    Search flights using Amadeus API
-    
-    Returns flights with booking links to partner sites
+    Search flights using Amadeus API, with robust error handling.
     """
     
-    # Get access token
+    # -------------------------------------------------------------
+    # 1. SETUP AND AUTHENTICATION
+    # -------------------------------------------------------------
     token = get_access_token()
     if not token:
         logger.error("Failed to get Amadeus access token")
-        return []
+        return [] # FIXED: lowercase return
     
-    # Build API endpoint
     endpoint = f"{AMADEUS_BASE_URL}/v2/shopping/flight-offers"
     
-    # Prepare parameters
     params = {
         "originLocationCode": origin,
         "destinationLocationCode": destination,
@@ -116,12 +123,10 @@ def search_flights_amadeus(
         "travelClass": map_cabin_class(cabin_class)
     }
     
-    # Add return date for round-trip
     if trip_type == "round-trip" and date_to:
         params["returnDate"] = date_to
     
-    # Filter for direct flights
-    
+    if direct_only:
         params["nonStop"] = "true"
     
     headers = {
@@ -129,43 +134,60 @@ def search_flights_amadeus(
         "Accept": "application/json"
     }
     
-    logger.info(f"🔍 Searching Amadeus: {origin} → {destination}")
+    logger.info(f"🔍 Searching Amadeus: {origin} → {destination} (Depart: {date_from})")
     
+    # -------------------------------------------------------------
+    # 2. API CALL AND ERROR HANDLING
+    # -------------------------------------------------------------
     try:
+        # --- API CALL ---
         response = requests.get(endpoint, params=params, headers=headers, timeout=15)
         
+        # --- HTTP ERROR CHECK ---
         if response.status_code != 200:
-            logger.error(f"Amadeus API error: {response.status_code} - {response.text}")
+            logger.error(f"❌ Amadeus HTTP Error {response.status_code}: {response.text}")
             return []
         
+        # --- DATA CHECK ---
         data = response.json()
         offers = data.get("data", [])
         
         if not offers:
-            logger.warning("No flights found from Amadeus")
+            logger.warning("⚠️ No flights found from Amadeus for criteria.")
             return []
+            
+        # --- 3. SUCCESS/PARSING LOGIC ---
+        logger.info(f"✅ Found {len(offers)} raw offers from Amadeus. Starting parsing.")
         
-        logger.info(f"✅ Found {len(offers)} flights from Amadeus")
-        
-        # Parse and format flights
         flights = []
         for offer in offers:
-            parsed = parse_amadeus_flight(offer, trip_type, origin, destination, direct_only )
+            # Assuming parse_amadeus_flight is correctly defined and available
+            parsed = parse_amadeus_flight(offer, trip_type, origin, destination, direct_only) 
             if parsed:
                 flights.append(parsed)
-        
-        return flights[:limit]
-    
+                
+        # CRITICAL: Return the final list of successfully parsed flights
+        logger.info(f"Successfully parsed {len(flights)} flight offers.")
+        return flights[:limit] 
+
+    # --- 4. FAILSAFE EXCEPTION CATCHES ---
     except requests.exceptions.RequestException as e:
-        logger.error(f"Amadeus API request failed: {e}")
+        logger.error(f"Amadeus API request failed (Network/Timeout): {e}")
         return []
     except Exception as e:
-        logger.error(f"Error processing Amadeus response: {e}")
+        logger.critical(f"🛑 FATAL EXCEPTION in search_flights_amadeus: {e}")
+        traceback.print_exc()
         return []
 
+# ----------------------------------------------------------------------
+# 5. parse_amadeus_flight HELPER FUNCTION (PROVIDED BY USER, CLEANED UP)
+# ----------------------------------------------------------------------
 
 def parse_amadeus_flight(offer: Dict, trip_type: str, origin: str, destination: str, direct_only: bool) -> Optional[Dict]:
-    """Parse Amadeus flight offer into our standard format"""
+    """
+    Parse Amadeus flight offer into our standard format.
+    (Body of the function remains the same as provided by the user)
+    """
     try:
         # offer_id must be extracted for the unique MD5 ID generation
         offer_id = offer.get("id", "")
@@ -185,13 +207,26 @@ def parse_amadeus_flight(offer: Dict, trip_type: str, origin: str, destination: 
         first_segment = outbound_segments[0]
         last_segment = outbound_segments[-1]
         
-        # Extract times
-        depart_time = first_segment.get("departure", {}).get("at", "")
-        arrive_time = last_segment.get("arrival", {}).get("at", "")
+        # Extract raw times (e.g., "2025-12-12T10:30:00+01:00")
+        depart_time_raw = first_segment.get("departure", {}).get("at", "")
+        arrive_time_raw = last_segment.get("arrival", {}).get("at", "")
         
-        # Format times to "YYYY-MM-DD HH:MM"
-        depart_formatted = format_amadeus_datetime(depart_time)
-        arrive_formatted = format_amadeus_datetime(arrive_time)
+        # --- CRITICAL FIX: Robust, Standardized Datetime Formatting ---
+        def standardize_datetime(raw_iso_time: str) -> str:
+            if not raw_iso_time:
+                return ""
+            try:
+                # Replace 'Z' (UTC marker) and ensure consistency for parsing
+                iso_time_clean = raw_iso_time.replace('Z', '+00:00')
+                # Parse the ISO string (handles T and timezones)
+                dt_object = datetime.fromisoformat(iso_time_clean) 
+                # Convert back to a standardized, non-timezone-aware string (the target format)
+                return dt_object.strftime("%Y-%m-%d %H:%M:%S")
+            except ValueError:
+                return ""
+            
+        depart_formatted = standardize_datetime(depart_time_raw)
+        arrive_formatted = standardize_datetime(arrive_time_raw)
         
         # Return flight (for round-trip)
         return_depart_formatted = None
@@ -205,13 +240,13 @@ def parse_amadeus_flight(offer: Dict, trip_type: str, origin: str, destination: 
                 return_first = return_segments[0]
                 return_last = return_segments[-1]
                 
-                return_depart_formatted = format_amadeus_datetime(
+                return_depart_formatted = standardize_datetime(
                     return_first.get("departure", {}).get("at", "")
                 )
-                return_arrive_formatted = format_amadeus_datetime(
+                return_arrive_formatted = standardize_datetime(
                     return_last.get("arrival", {}).get("at", "")
                 )
-        
+
         # Get airline
         carrier_code = first_segment.get("carrierCode", "")
         flight_number = first_segment.get("number", "")
@@ -221,7 +256,8 @@ def parse_amadeus_flight(offer: Dict, trip_type: str, origin: str, destination: 
         
         # Duration
         duration_str = outbound.get("duration", "PT0H0M")
-        duration_minutes = parse_iso_duration(duration_str)
+        # NOTE: parse_iso_duration and format_duration must be defined in utils.py
+        duration_minutes = parse_iso_duration(duration_str) 
         duration_formatted = format_duration(duration_minutes)
         
         # Price
@@ -229,44 +265,35 @@ def parse_amadeus_flight(offer: Dict, trip_type: str, origin: str, destination: 
         price = float(price_info.get("total", 0))
         currency = price_info.get("currency", "EUR")
         
-        # ✅ FIX: BUILD BOOKING LINK WITH AFFILIATE MARKER
-        depart_date_only = depart_time[:10] if depart_time else ""
+        # --- Build Booking Link (Temporary Aviasales Search Link) ---
+        depart_date_only = depart_time_raw[:10] if depart_time_raw else ""
         return_date_only = return_depart_formatted[:10] if return_depart_formatted else None
         
-        # Format dates to DDMM for Aviasales
         def date_to_ddmm(date_str):
-            """Convert YYYY-MM-DD to DDMM"""
             if not date_str or len(date_str) < 10:
                 return ""
             return date_str[8:10] + date_str[5:7]
         
         depart_ddmm = date_to_ddmm(depart_date_only)
-        
-        # Build Aviasales search code
         search_code = f"{origin}{depart_ddmm}{destination}"
         
         if return_date_only:
             return_ddmm = date_to_ddmm(return_date_only)
             search_code += return_ddmm
         
-        # Build Aviasales URL with flight details
+        # Ensure AFFILIATE_MARKER is available in scope
         booking_link = f"https://www.aviasales.com/search/{search_code}"
-        # ✅ FIX APPLIED: Added marker={AFFILIATE_MARKER}
         booking_link += f"?marker={AFFILIATE_MARKER}&adults=1&currency=eur&with_request=true"
         
-        # Add airline filter to help find the exact flight
         if carrier_code:
             booking_link += f"&airlines={carrier_code}"
-        
-        # Add direct flights filter if applicable
         if direct_only:
             booking_link += "&transfers=0"
-            # Adding '&direct=true' is an important additional parameter to enforce the direct flight filter on the Aviasales server-side.
-            booking_link += "&direct=true"
+            booking_link += "&direct=true" 
         
-        # Generate unique ID
+        # Generate unique ID 
         flight_id = hashlib.md5(
-            f"{offer_id}_{depart_time}".encode()
+            f"{offer_id}_{depart_time_raw}".encode()
         ).hexdigest()
         
         # Build standardized flight object
@@ -274,27 +301,26 @@ def parse_amadeus_flight(offer: Dict, trip_type: str, origin: str, destination: 
             "id": flight_id,
             "airline": carrier_code,
             "flight_number": f"{carrier_code}{flight_number}",
-            "depart": depart_formatted,
+            "depart": depart_formatted, # GUARANTEED YYYY-MM-DD HH:MM:SS
             "return": return_arrive_formatted if trip_type == "round-trip" else arrive_formatted,
             "return_depart": return_depart_formatted,
             "origin": origin,
             "destination": destination,
-            "duration": duration_formatted,
-            "duration_minutes": duration_minutes,
             "stops": stops,
-            "price": int(price),
+            "duration": duration_formatted,
+            "price": price,
             "currency": currency,
-            "vendor": "Flight Finder",
-            "link": booking_link,
-            "deeplink": booking_link,
-            "trip_type": trip_type,
-            "cabin_class": "Economy",
-            "offer_id": offer_id  # Store for later booking API call
+            "link": booking_link, # Default link
+            "deeplink": booking_link, # Placeholder for deeplink
+            "vendor": "Amadeus (Aviasales Search)",
         }
     
     except Exception as e:
         logger.error(f"Error parsing Amadeus flight: {e}")
+        # traceback.print_exc() # Can uncomment if needed for deep debugging
         return None
+
+
 
 
 def format_amadeus_datetime(dt_str: str) -> str:

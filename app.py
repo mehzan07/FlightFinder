@@ -5,6 +5,9 @@ import logging
 from datetime import datetime
 from flask import Flask, render_template, request, jsonify, session, redirect
 from dotenv import load_dotenv
+# === Import the flight search and merge function ===
+# Assuming the file where you put your search functions is named 'flight_search.py'
+from flight_search import get_combined_flight_results
 import os
 
 # === Load environment variables ===
@@ -68,6 +71,48 @@ def inject_current_year():
 
 if IS_LOCAL:
     logging.info("Running in local mode.")
+    
+    
+@app.route('/flights/results', methods=['GET'])
+def flight_search_route():
+    # 1. Receive Input (Parameters typically come from the travel_form UI)
+    
+    # Use request.args.get() to safely retrieve parameters from the URL
+    origin = request.args.get('origin')
+    destination = request.args.get('destination')
+    date_from = request.args.get('date_from')
+    date_to = request.args.get('date_to')
+    
+    # Retrieve boolean/integer parameters
+    direct_only = request.args.get('direct_only') == 'on' # Checkbox returns 'on' if checked
+    adults = request.args.get('adults', type=int) or 1
+    
+    if not all([origin, destination, date_from]):
+        # Simple validation: redirect back if key parameters are missing
+        return redirect('/') 
+
+    logger.info(f"Starting combined search: {origin} to {destination} on {date_from}")
+
+    try:
+        # 2. CRITICAL STEP: Call the Merging Logic
+        # This function executes both Amadeus and Travelpayouts searches and replaces the link.
+        final_flights = get_combined_flight_results(
+            origin_code=origin, 
+            destination_code=destination, 
+            date_from_str=date_from, 
+            date_to_str=date_to,
+            direct_only=direct_only,
+            adults=adults,
+            # Pass other parameters (children, infants, cabin_class) as needed
+        )
+        
+        # 3. Render Output
+        return render_template('search_results.html', flights=final_flights)
+
+    except Exception as e:
+        logger.error(f"Search failed: {e}")
+        # Return an error message to the user
+        return render_template('search_results.html', error=f"An error occurred during the flight search: {e}", flights=[])
 
 # === Dev-only Debugging ===
 if __name__ == "__main__" and FLASK_ENV == "development":

@@ -9,7 +9,7 @@ import traceback
 import os
 
 from utils import extract_travel_entities
-from flight_search import search_flights as search_flights_func
+from flight_search import get_combined_flight_results, search_flights as search_flights_func
 from iata_codes import city_to_iata
 
 from travel import generate_booking_reference
@@ -20,6 +20,8 @@ from db import save_booking
 
 from utils import extract_iata
 from utils import build_flight_deeplink
+
+from urllib.parse import urlencode # You might need this for proper query string handling
 
 from config import get_logger, AFFILIATE_MARKER, API_TOKEN
 logger = get_logger(__name__)
@@ -224,6 +226,7 @@ def travel_ui():
 
 # === Alternative Search Route (if your form posts here) ===
 @travel_bp.route("/search-flights", methods=["POST"])
+@travel_bp.route("/search-flights", methods=["POST"])
 def search_flights():
     """Alternative search endpoint - uses hybrid Amadeus/Travelpayouts"""
     logger.info("search_flights route hit")
@@ -241,8 +244,8 @@ def search_flights():
 
     if not origin or not destination or not depart_date:
         return render_template("travel_form.html", 
-                             errors=["Please provide origin, destination, and departure date"],
-                             form_data=request.form)
+                              errors=["Please provide origin, destination, and departure date"],
+                              form_data=request.form)
 
     # ✅ IMPORTANT: Use the main search_flights function (which has Amadeus logic)
     try:
@@ -273,15 +276,23 @@ def search_flights():
         # Format flights for display
         marker = AFFILIATE_MARKER or os.getenv("AFFILIATE_MARKER", "")
         
+        # --- CRITICAL FIX: Add type guard (isinstance(flight, dict)) ---
+        safe_flights = []
         for flight in flights:
-            # Ensure deeplink exists
-            if not flight.get("link") and not flight.get("deeplink"):
-                flight["deeplink"] = build_flight_deeplink(flight, marker)
+            if isinstance(flight, dict):
+                
+                # Ensure deeplink exists
+                if not flight.get("link") and not flight.get("deeplink"):
+                    flight["deeplink"] = build_flight_deeplink(flight, marker)
+                else:
+                    flight["deeplink"] = flight.get("link") or flight.get("deeplink")
+                    
+                safe_flights.append(flight)
             else:
-                flight["deeplink"] = flight.get("link") or flight.get("deeplink")
+                logger.error(f"Discarding non-dictionary flight result (Type: {type(flight)}): {flight}")
 
-        # Apply the limit here too (in case API returns more)
-        flights = flights[:limit]
+        # Apply limit here too (in case API returns more)
+        flights = safe_flights[:limit]
         
         logger.info(f"Returning {len(flights)} flights (limit: {limit})")
 
@@ -301,8 +312,10 @@ def search_flights():
         logger.error(f"Search error: {e}")
         logger.error(traceback.format_exc())
         return render_template("travel_form.html",
-                             errors=[f"Search failed: {str(e)}"],
-                             form_data=request.form)
+                              errors=[f"Search failed: {str(e)}"],
+                              form_data=request.form)
+
+
 
 
 @travel_bp.route("/offer/<offer_id>")
@@ -530,3 +543,91 @@ def health():
         'timestamp': datetime.utcnow().isoformat(),
         'service': 'FlightFinder'
     })
+    
+    # In your travel_ui.py file:
+# Ensure you have the necessary imports at the top:
+# from flask import Blueprint, render_template, request, redirect
+# from .flight_search import get_combined_flight_results 
+# from app import logger # Or whichever way you access the logger
+
+# ... (Existing code for travel_bp definition and other routes) ...
+
+@travel_bp.route('/flights/results', methods=['GET'])
+def flight_results():
+    """
+    Handles the search submission, calls the merging logic, and displays results.
+    This is the function that *calls* get_combined_flight_results.
+    """
+    
+    # --- 1. Receive Input (Get parameters from the URL query string) ---
+    
+    # Use request.args.get() to safely retrieve parameters from the URL
+    origin = request.args.get('origin')
+    destination = request.args.get('destination')
+    date_from = request.args.get('date_from')
+    date_to = request.args.get('date_to')
+    
+    # Safely handle other parameters
+    # The 'on' check is for checkboxes, assume 'direct_only' comes from a checkbox or explicit value
+    direct_only = request.args.get('direct_only') in ['on', 'true'] 
+    adults = request.args.get('adults', type=int) or 1
+    children = request.args.get('children', type=int) or 0
+    infants = request.args.get('infants', type=int) or 0
+    cabin_class = request.args.get('cabin_class', 'economy') 
+    
+    # Simple validation
+    if not all([origin, destination, date_from]):
+        # Redirect back to home or a form if key parameters are missing
+        return redirect('/') 
+
+    logger.info(f"Route Handler calling combined search: {origin} to {destination} on {date_from}")
+
+    try:
+        # --- 2. CRITICAL STEP: Call the Merging Logic ---
+        # The view function calls your core business logic function.
+        final_flights = get_combined_flight_results(
+            origin_code=origin, 
+            destination_code=destination, 
+            date_from_str=date_from, 
+            date_to_str=date_to,
+            direct_only=direct_only,
+            adults=adults,
+            children=children,
+            infants=infants,
+            cabin_class=cabin_class
+        ) 
+        
+        # --- 3. Render Output ---
+        return render_template('search_results.html', flights=final_flights)
+
+    except Exception as e:
+        logger.error(f"Flight search route failed: {e}")
+        # Return an error message to the user
+        return render_template('search_results.html', error=f"An error occurred during search: {e}", flights=[])
+    
+    
+    # app.py (Example using Flask)
+from flask import Flask, request, redirect, url_for
+
+# ... (other code) ...
+
+# This route captures any path that follows /search/
+# The <path:search_code> part captures the flight codes (ARN1202LHR1702)
+@travel_bp.route('/search/<path:search_code>')
+def redirect_to_external_search(search_code):
+    # 1. Capture all the query parameters (marker, adults, trip_class, etc.)
+    query_params = request.args
+    
+    # 2. Construct the full Aviasales/Travelpayouts external URL for the redirect
+    # This ensures that even though the deep link was empty, the fallback link 
+    # goes to the ultimate booking site (Aviasales, since the gate link was empty).
+    
+    base_url = f"https://www.aviasales.com/search/{search_code}"
+    
+    # 3. Add all the query parameters back to the URL
+    full_external_url = f"{base_url}?{url_for(request.args)}"
+
+    # 4. Redirect the user's browser to the external search URL
+    return redirect(full_external_url, code=302)
+
+# ... (rest of your routes, like @app.route('/travel-ui')) ...

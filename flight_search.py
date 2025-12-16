@@ -1,84 +1,86 @@
-# flight_search.py:
 from datetime import datetime
 import requests
 import time
 import hashlib
 import json as json_module
-import traceback # ✅ FIX: Added missing import
+import traceback
+from typing import List, Dict, Any, Optional
 
 from config import get_logger
 logs = get_logger(__name__)
-# The logger instance is named 'logs' here, but 'logger' is used below.
-# Assuming 'logger = logs' is intended or implicit for the rest of the file.
-logger = logs # Added to prevent NameError if logs is not used later
+logger = logs
 
 from config import AFFILIATE_MARKER, API_TOKEN, HOST, USER_IP, USE_REAL_API, FEATURED_FLIGHT_LIMIT, DEBUG_MODE
-
-from config import USE_AMADEUS, AMADEUS_API_KEY
-
-# Import Amadeus if available
-AMADEUS_AVAILABLE = False
-if USE_AMADEUS and AMADEUS_API_KEY:
-    try:
-        from amadeus_search import search_flights_amadeus
-        AMADEUS_AVAILABLE = True
-        logger.info("✅ Amadeus module loaded")
-    except ImportError as e:
-        logger.warning(f"Amadeus module not available: {e}")
-
-# At the very top, after imports
-FORCE_AMADEUS = True  # ✅ Add this line
+from config import USE_AMADEUS, AMADEUS_API_KEY, FORCE_AMADEUS
+from amadeus_search import search_flights_amadeus
+from urllib.parse import urlencode
 
 def search_flights(origin_code, destination_code, date_from_str, date_to_str, 
-                   trip_type, adults=1, children=0, infants=0, cabin_class="economy", 
-                   limit=None, direct_only=False):
-    """Main entry point for flight search"""
+                    trip_type, adults=1, children=0, infants=0, cabin_class="economy", 
+                    limit=None, direct_only=False) -> List[Dict]:
     
-    # Force Amadeus for debugging
-    if FORCE_AMADEUS:  # ✅ Change this line
-        logger.info("🔍 FORCING Amadeus API")
+    if not USE_REAL_API:
+        logger.info("🔍 Using Travelpayouts MOCK API (No Deep Link Merge)")
+        return search_flights_mock(
+            origin_code, destination_code, date_from_str, date_to_str, 
+            trip_type, limit=limit, direct_only=direct_only
+        )
+    
+    logger.info("Starting HYBRID REAL API search (Amadeus + Travelpayouts Merge)")
+    
+    amadeus_flights = []
+    travelpayouts_link_map = {}
+    
+    # 1. Get Flight Details (Amadeus - Primary Source)
+    if USE_AMADEUS and AMADEUS_API_KEY:
         try:
-            from amadeus_search import search_flights_amadeus
-            flights = search_flights_amadeus(
-                origin=origin_code,
-                destination=destination_code,
-                date_from=date_from_str,
-                date_to=date_to_str,
-                trip_type=trip_type,
-                adults=adults,
-                children=children,
-                infants=infants,
-                cabin_class=cabin_class,
-                limit=limit,
-                direct_only=direct_only
+            amadeus_flights = search_flights_amadeus(
+                origin=origin_code, destination=destination_code, date_from=date_from_str, 
+                date_to=date_to_str, trip_type=trip_type, adults=adults, children=children, 
+                infants=infants, cabin_class=cabin_class, limit=limit, direct_only=direct_only
+            )
+            logger.info(f"✅ Amadeus returned {len(amadeus_flights)} flights")
+        except Exception as e:
+            logger.error(f"❌ Amadeus search failed: {e}")
+            traceback.print_exc()
+            if FORCE_AMADEUS:
+                # If forced, treat failure as critical and exit the entire function
+                logger.critical("🚨 FORCE_AMADEUS is True. Cannot proceed without Amadeus data.")
+                return [] 
+    else:
+        logger.warning("Amadeus search skipped: USE_AMADEUS is False or AMADEUS_API_KEY is missing.")
+
+    # 2. Get Deep Links (Travelpayouts - Secondary Source)
+    if not amadeus_flights:
+        logger.warning("No Amadeus flights found. Skipping Travelpayouts deep link search.")
+    else:
+        try:
+            travelpayouts_link_map = search_flights_api(
+                origin_code, destination_code, date_from_str, date_to_str, 
+                trip_type, adults, children, infants, cabin_class, limit=limit, direct_only=direct_only
             )
             
-            if flights:
-                logger.info(f"✅ Amadeus returned {len(flights)} flights")
-                return flights
-            else:
-                logger.warning("⚠️ Amadeus returned empty")
+            logger.info(f"✅ Travelpayouts link map size: {len(travelpayouts_link_map)}")
+            
         except Exception as e:
-            logger.error(f"❌ Amadeus ERROR: {e}")
-            import traceback # ✅ FIX: Typo corrected (was 'Import Traceback')
+            logger.error(f"❌ Travelpayouts search failed: {e}")
             traceback.print_exc()
+
+    # 3. Merge Results 
+    if not amadeus_flights:
+        logger.warning("No Amadeus flight data. Cannot merge. Returning empty list.")
+        return []
+
+    final_flights = get_combined_flight_results(
+        amadeus_flights, 
+        travelpayouts_link_map
+    )
     
-    # Original code continues...
-    
-    # Fallback to Travelpayouts
-    logger.info("🔍 Using Travelpayouts API")
-    if USE_REAL_API:
-        return search_flights_api(origin_code, destination_code, date_from_str, date_to_str, trip_type, adults, children, infants, cabin_class, limit=limit, direct_only=direct_only)
-    else:
-        return search_flights_mock(origin_code, destination_code, date_from_str, date_to_str, trip_type, limit=limit, direct_only=direct_only)
-
-
-# ... (rest of the file is unchanged)
-
+    logger.info(f"✈️ Returning {len(final_flights)} combined flights.")
+    return final_flights
 
 
 def map_cabin_class(cabin_class):
-    """Convert cabin class names to API codes"""
     return {
         "economy": "Y",
         "business": "C",
@@ -87,26 +89,15 @@ def map_cabin_class(cabin_class):
 
 
 def generate_flight_id(link, airline, departure):
-    """Generate unique flight ID"""
     raw = f"{airline}_{departure}_{link}"
     return hashlib.md5(raw.encode()).hexdigest()
 
 
 def format_flight_datetime(date_str, time_str):
-    """
-    Convert API date/time strings to standardized format.
-    
-    API returns:
-    - date: "2025-01-15" (YYYY-MM-DD)
-    - time: "14:30" or "14:30:00" (HH:MM or HH:MM:SS)
-    
-    Returns: "2025-01-15 14:30" (YYYY-MM-DD HH:MM)
-    """
     if not date_str or not time_str:
         return ""
     
     try:
-        # Remove seconds if present
         time_parts = time_str.split(":")
         time_formatted = f"{time_parts[0]}:{time_parts[1]}"
         return f"{date_str} {time_formatted}"
@@ -116,13 +107,11 @@ def format_flight_datetime(date_str, time_str):
 
 
 def calculate_duration_minutes(all_flights):
-    """Calculate total flight duration in minutes"""
     total = sum(f.get("duration", 0) for f in all_flights)
     return total
 
 
 def format_duration(minutes):
-    """Convert minutes to human-readable format (e.g., '5h 30m')"""
     if not minutes or minutes == 0:
         return "N/A"
     hours = minutes // 60
@@ -136,11 +125,9 @@ def format_duration(minutes):
 
 
 def generate_signature(token, marker, host, user_ip, locale, trip_class, passengers, segments):
-    """Generate MD5 signature for API authentication"""
     outbound = segments[0]
 
     if len(segments) == 1:
-        # One-way format
         raw_string = (
             f"{token}:{host}:{locale}:{marker}:"
             f"{passengers['adults']}:{passengers['children']}:{passengers['infants']}:"
@@ -148,7 +135,6 @@ def generate_signature(token, marker, host, user_ip, locale, trip_class, passeng
             f"{trip_class}:{user_ip}"
         )
     else:
-        # Round-trip format
         return_seg = segments[1]
         raw_string = (
             f"{token}:{host}:{locale}:{marker}:"
@@ -165,11 +151,24 @@ def generate_signature(token, marker, host, user_ip, locale, trip_class, passeng
 
 
 def search_flights_api(origin_code, destination_code, date_from_str, date_to_str=None, trip_type="round-trip", adults=1, children=0, infants=0, cabin_class="economy", limit=None, direct_only=False):
-    """Search real-time flights using Travelpayouts API"""
     
+    def standardize_api_datetime(raw_date: str, raw_time: str) -> str:
+        combined_dt_str = f"{raw_date} {raw_time}"
+        try:
+            dt_object = datetime.strptime(combined_dt_str, "%Y-%m-%d %H:%M")
+            return dt_object.strftime("%Y-%m-%d %H:%M:%S")
+        except ValueError as e:
+            logger.warning(f"Failed to parse Travelpayouts time for key: {e}. Raw data: {combined_dt_str}")
+            if len(combined_dt_str) == 16:
+                return combined_dt_str + ":00"
+            return combined_dt_str 
+    
+    def to_ddmm(date_str):
+        if not date_str or len(date_str) < 10: return ""
+        return date_str[8:10] + date_str[5:7]
+
     init_url = "https://api.travelpayouts.com/v1/flight_search"
 
-    # Build segments
     segments = [{
         "date": date_from_str,
         "destination": destination_code,
@@ -182,12 +181,7 @@ def search_flights_api(origin_code, destination_code, date_from_str, date_to_str
             "destination": origin_code,
             "origin": destination_code
         })
-    
-    if DEBUG_MODE:
-        print(f"🧭 Trip type: {trip_type}")
-        print(f"🧳 Segments: {json_module.dumps(segments, indent=2)}")
 
-    # Prepare passengers
     passengers = {
         "adults": int(adults),
         "children": int(children),
@@ -196,7 +190,6 @@ def search_flights_api(origin_code, destination_code, date_from_str, date_to_str
     
     trip_class_code = map_cabin_class(cabin_class)
 
-    # Generate signature
     signature = generate_signature(
         token=API_TOKEN,
         marker=AFFILIATE_MARKER,
@@ -208,7 +201,6 @@ def search_flights_api(origin_code, destination_code, date_from_str, date_to_str
         segments=segments
     )
 
-    # Build payload
     payload = {
         "marker": AFFILIATE_MARKER,
         "host": HOST,
@@ -222,31 +214,25 @@ def search_flights_api(origin_code, destination_code, date_from_str, date_to_str
 
     headers = {"Content-Type": "application/json"}
 
-    if DEBUG_MODE:
-        print(f"\n📤 POST {init_url}")
-        print(f"📦 Payload: {json_module.dumps(payload, indent=2)}")
-
-    # Initiate search
     try:
         response = requests.post(init_url, json=payload, headers=headers, timeout=10)
         
         if response.status_code != 200:
             logger.error(f"API error: {response.status_code} - {response.text}")
-            return []
+            return {}
         
         search_id = response.json().get("search_id") or response.json().get("uuid")
         
         if not search_id:
             logger.error("No search_id returned from API")
-            return []
+            return {}
         
         logger.info(f"🔗 Search initiated: {search_id}")
         
     except requests.exceptions.RequestException as e:
         logger.error(f"Request failed: {e}")
-        return []
+        return {}
 
-    # Poll for results
     results_url = f"https://api.travelpayouts.com/v1/flight_search_results?uuid={search_id}"
     raw_proposals = []
     
@@ -271,213 +257,134 @@ def search_flights_api(origin_code, destination_code, date_from_str, date_to_str
                 
         except requests.exceptions.RequestException as e:
             logger.error(f"Polling failed: {e}")
-    
+            
     if not raw_proposals:
         logger.warning("No results after polling")
-        return []
+        return {}
 
-    # Parse proposals
-    filtered = []
-    
-    if DEBUG_MODE:
-        logger.info("=" * 60)
-        logger.info("SAMPLE PROPOSAL (first one):")
-        if raw_proposals:
-            logger.info(json_module.dumps(raw_proposals[0], indent=2))
-        logger.info("=" * 60)
+    deep_link_map = {}
     
     for proposal in raw_proposals:
+        
+        segments_data = proposal.get("segment", [])
+        if not segments_data:
+            continue
+
+        outbound_segment = segments_data[0]
+        outbound_flights = outbound_segment.get("flight", [])
+        if not outbound_flights:
+            continue
+
+        first_flight = outbound_flights[0]
+        
+        airline = first_flight.get("marketing_carrier", "Unknown")
+
+        raw_date = first_flight.get("departure_date", "")
+        raw_time = first_flight.get("departure_time", "")
+        
+        depart_datetime = standardize_api_datetime(raw_date, raw_time)
+
+        match_key = f"{airline}_{depart_datetime}"
+        
         terms = proposal.get("terms", {})
         
         for gate_id, term_data in terms.items():
             price = term_data.get("price")
             currency = term_data.get("currency")
-            
-            # Get booking link
             raw_url = term_data.get("deep_link", "")
+            booking_link = ""
             
             if raw_url and isinstance(raw_url, str) and raw_url.startswith("http"):
-                # API provided a link - use it
                 if AFFILIATE_MARKER and "marker=" not in raw_url:
                     separator = "&" if "?" in raw_url else "?"
                     booking_link = f"{raw_url}{separator}marker={AFFILIATE_MARKER}"
                 else:
                     booking_link = raw_url
                 
-                if DEBUG_MODE:
-                    logger.info(f"🔗 Using API deep_link: {booking_link}")
             else:
-                # API didn't provide link - build it manually
-                if DEBUG_MODE:
-                    logger.debug(f"No deep_link for gate {gate_id}, building manually")
-                
-                # Get flight details to build link
-                segment = proposal.get("segment", [])
-                if not segment:
-                    continue
-                
-                outbound = segment[0]
-                outbound_flights = outbound.get("flight", [])
-                if not outbound_flights:
-                    continue
-                
-                first_flight = outbound_flights[0]
+              # *** FIX: Use the configured HOST instead of hardcoded aviasales.com ***
+              # *** Now using urlencode for robust URL parameter handling ***
+            
                 last_flight = outbound_flights[-1]
-                
-                # Build search code: ORIGIN+DDMM+DESTINATION+DDMM (for round-trip)
                 origin = first_flight.get("departure", "")
                 destination = last_flight.get("arrival", "")
-                depart_date = first_flight.get("departure_date", "")
-                depart_time = first_flight.get("departure_time", "")
-                
-                # Format date to DDMM
-                def to_ddmm(date_str):
-                    if not date_str or len(date_str) < 10:
-                        return ""
-                    return date_str[8:10] + date_str[5:7]  # YYYY-MM-DD -> DDMM
-                
-                search_code = f"{origin}{to_ddmm(depart_date)}{destination}"
-                
-                # Add return date if round-trip
-                if len(segment) > 1:
-                    return_seg = segment[1]
-                    return_flights = return_seg.get("flight", [])
-                    if return_flights:
-                        return_first = return_flights[0]
-                        return_date = return_first.get("departure_date", "")
-                        search_code += to_ddmm(return_date)
-                
-                # Build URL with ALL relevant parameters to preserve search
-                booking_link = (
-                    f"https://www.aviasales.com/search/{search_code}"
-                    f"?marker={AFFILIATE_MARKER}"
-                    f"&adults={passengers['adults']}"
-                    f"&children={passengers['children']}"
-                    f"&infants={passengers['infants']}"
-                    f"&trip_class={trip_class_code}"
-                )
-                
-                # Add gate_id to redirect to specific booking site
-                if gate_id:
-                    booking_link += f"&gate_id={gate_id}"
-                
-                # Add direct_only filter if requested
+            
+            # 1. Build the Travelpayouts search code
+                search_code = f"{origin}{to_ddmm(date_from_str)}{destination}"
+            
+                if trip_type == "round-trip" and date_to_str:
+                    search_code += to_ddmm(date_to_str)
+            
+            # 2. Collect all URL parameters into a dictionary
+                params = {
+                    "marker": AFFILIATE_MARKER,
+                    "adults": passengers['adults'],
+                    "children": passengers['children'],
+                    "infants": passengers['infants'],
+                    "trip_class": trip_class_code,
+                    "gate_id": gate_id,
+                }
+            
                 if direct_only:
-                    booking_link += "&transfers=0"
-                    booking_link += "&direct=true"
-                
-                if DEBUG_MODE:
-                    logger.info(f"🔨 Built manual link: {booking_link}")
+                    params["transfers"] = 0
+                    params["direct"] = "true" 
             
-            # Parse flight segments
-            segments_data = proposal.get("segment", [])
-            
-            if not segments_data:
-                continue
-            
-            # OUTBOUND FLIGHT (always exists)
-            outbound_segment = segments_data[0]
-            outbound_flights = outbound_segment.get("flight", [])
-            
-            if not outbound_flights:
-                continue
-            
-            first_flight = outbound_flights[0]
-            last_flight = outbound_flights[-1]
-            
-            # Extract outbound details
-            airline = first_flight.get("marketing_carrier", "Unknown")
-            flight_number = first_flight.get("number", "N/A")
-            
-            # FORMAT TIMES PROPERLY
-            depart_datetime = format_flight_datetime(
-                first_flight.get("departure_date", ""),
-                first_flight.get("departure_time", "")
-            )
-            
-            arrive_datetime = format_flight_datetime(
-                last_flight.get("arrival_date", ""),
-                last_flight.get("arrival_time", "")
-            )
-            
-            origin = first_flight.get("departure", "")
-            destination = last_flight.get("arrival", "")
-            duration_minutes = calculate_duration_minutes(outbound_flights)
-            stops = len(outbound_flights) - 1
-            
-            # RETURN FLIGHT (for round-trips)
-            return_depart_datetime = None
-            return_arrive_datetime = None
-            
-            if trip_type == "round-trip" and len(segments_data) > 1:
-                return_segment = segments_data[1]
-                return_flights = return_segment.get("flight", [])
-                
-                if return_flights:
-                    return_first = return_flights[0]
-                    return_last = return_flights[-1]
-                    
-                    return_depart_datetime = format_flight_datetime(
-                        return_first.get("departure_date", ""),
-                        return_first.get("departure_time", "")
+            # 3. Encode parameters into a URL-safe string
+            # IMPORTANT: Ensure 'from urllib.parse import urlencode' is at the top of the file.
+                    query_string = urlencode(params)
+
+                    # 4. Construct the final internal link using the encoded string
+                    booking_link = (
+                      f"http://{HOST}/search/{search_code}?{query_string}" 
                     )
-                    
-                    return_arrive_datetime = format_flight_datetime(
-                        return_last.get("arrival_date", ""),
-                        return_last.get("arrival_time", "")
-                    )
+
             
-            # Validate required fields
-            if not booking_link or not depart_datetime or not price:
-                if DEBUG_MODE:
-                    logger.debug("⛔ Skipping incomplete proposal")
-                continue
+            if match_key not in deep_link_map or (price is not None and price < deep_link_map[match_key].get('price', float('inf'))):
+                
+                if booking_link and price is not None:
+                    deep_link_map[match_key] = {
+                        'link': booking_link,
+                        'price': price,
+                        'currency': currency,
+                        'vendor_gate_id': gate_id,
+                    }
+                
+    logger.info(f"Generated deep link map with {len(deep_link_map)} unique links.")
+    
+    return deep_link_map
+
+def get_combined_flight_results(amadeus_flights: List[Dict], travelpayouts_link_map: Dict) -> List[Dict]:
+    final_flights = []
+    
+    logger.info(f"Starting merge process. Amadeus flights: {len(amadeus_flights)}. Deep links available: {len(travelpayouts_link_map)}.")
+
+    logger.debug(f"Deep Link Map Keys: {list(travelpayouts_link_map.keys())}") 
+
+    for amadeus_flight in amadeus_flights:
+        
+        carrier = amadeus_flight.get("airline", "XX")
+        depart_time = amadeus_flight.get("depart", "") 
+        match_key = f"{carrier}_{depart_time}"
+        
+        logger.info(f"🔑 AMADEUS KEY: '{match_key}' (Length: {len(match_key)})")
+
+        if match_key in travelpayouts_link_map:
+            link_data = travelpayouts_link_map[match_key]
             
-            # Build flight object
-            flight_data = {
-                "id": generate_flight_id(booking_link, airline, depart_datetime),
-                "airline": airline,
-                "flight_number": flight_number,
-                "depart": depart_datetime,
-                "return": return_arrive_datetime if trip_type == "round-trip" else arrive_datetime,
-                "return_depart": return_depart_datetime,
-                "origin": origin,
-                "destination": destination,
-                "duration": format_duration(duration_minutes),
-                "duration_minutes": duration_minutes,
-                "stops": stops,
-                "price": price,
-                "currency": currency,
-                "vendor": "Travelpayouts",
-                "link": booking_link,
-                "trip_type": trip_type,
-                "cabin_class": cabin_class
-            }
+            amadeus_flight["link"] = link_data["link"]
+            amadeus_flight["deeplink"] = link_data["link"]
+            amadeus_flight["vendor"] = link_data.get("vendor_gate_id", "Travelpayouts")
             
-            filtered.append(flight_data)
-    
-    # Apply filters
-    if direct_only:
-        filtered = [f for f in filtered if f.get("stops", 0) == 0]
-    
-    if not filtered:
-        logger.warning("No flights matched criteria")
-        return []
-    
-    # Sort by price
-    filtered.sort(key=lambda x: x.get("price", float("inf")))
-    
-    # Limit results
-    limit = limit or FEATURED_FLIGHT_LIMIT
-    featured_flights = filtered[:limit]
-    
-    logger.info(f"🎯 Returning {len(featured_flights)} flights (from {len(filtered)} total)")
-    
-   # return featured_flights
-    return deep_link_map # <-- CHANGE: Return the map for matching!
+            final_flights.append(amadeus_flight)
+            logger.info(f"✅ Q2 Solved: Found Deep Link for {match_key}. Link starts with: {link_data['link'][:50]}...")
+            
+        else:
+            final_flights.append(amadeus_flight) 
+            logger.warning(f"❌ Fallback: No deep link match found for {match_key}. Using generic search link.")
+            
+    return final_flights
 
 def search_flights_mock(origin_code, destination_code, date_from_str, date_to_str, trip_type, limit=None, direct_only=False):
-    """Mock flight search for testing (uses mock_data.py)"""
     from mock_data import mock_kiwi_response
     
     try:

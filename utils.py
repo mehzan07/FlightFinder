@@ -240,3 +240,65 @@ def build_flight_deeplink(flight, marker):
     except Exception as e:
         logger.error(f"Error building deeplink: {e}")
         return f"https://www.aviasales.com?marker={marker}"
+    
+    # utils.py
+
+from datetime import timedelta
+import re
+from typing import Optional
+
+def parse_iso_duration(duration_str: str) -> timedelta:
+    """
+    Parses an ISO 8601 duration string (e.g., 'PT1H30M', 'P1D') into a timedelta object.
+    
+    Amadeus provides duration in this format.
+    """
+    if not duration_str:
+        return timedelta()
+        
+    # Regex to find P, T, H, M, S components
+    duration_regex = re.compile(
+        r'P(?:(?P<days>\d+)D)?(?:T(?:(?P<hours>\d+)H)?(?:(?P<minutes>\d+)M)?(?:(?P<seconds>\d+)S)?)?'
+    )
+    match = duration_regex.match(duration_str)
+    
+    if not match:
+        return timedelta()
+        
+    parts = match.groupdict()
+    
+    # Convert parts to integers, defaulting to 0 if not present
+    return timedelta(
+        days=int(parts.get('days') or 0),
+        hours=int(parts.get('hours') or 0),
+        minutes=int(parts.get('minutes') or 0),
+        seconds=int(parts.get('seconds') or 0)
+    )
+
+def format_duration(duration_td: timedelta) -> str:
+    """
+    Formats a timedelta object into a human-readable string (e.g., '1h 30m').
+    """
+    total_seconds = int(duration_td.total_seconds())
+    
+    hours = total_seconds // 3600
+    minutes = (total_seconds % 3600) // 60
+    
+    parts = []
+    if hours > 0:
+        parts.append(f"{hours}h")
+    if minutes > 0:
+        parts.append(f"{minutes}m")
+    
+    return " ".join(parts) if parts else "0m"
+
+
+def to_ddmm(date_str: Optional[str]) -> str:
+    """
+    Converts a YYYY-MM-DD date string to a DDMM format used for Travelpayouts manual links.
+    """
+    if not date_str or len(date_str) < 10: 
+        return ""
+    
+    # Example: "2025-12-15" -> "1512"
+    return date_str[8:10] + date_str[5:7]
