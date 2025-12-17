@@ -45,7 +45,7 @@ $(document).ready(function () {
   // 📅 Date logic
   const dateFrom = document.getElementById("date_from");
   const dateTo = document.getElementById("date_to");
-  const returnDateGroup = document.getElementById("returnDateGroup");
+  // const returnDateGroup = document.getElementById("returnDateGroup"); // Removed as it's not used here
 
   if (dateFrom && dateTo) {
     const today = new Date().toISOString().split("T")[0];
@@ -55,38 +55,32 @@ $(document).ready(function () {
     });
   }
 
-  // 🔁 Trip type toggle logic
-  const tripTypeSelect = document.getElementById("trip_type");
-  const toggleReturnFields = () => {
-    const selected = tripTypeSelect.value;
-    if (selected === "one-way") {
-      returnDateGroup.style.display = "none";
-      dateTo.required = false;
-      dateTo.value = "";
-    } else {
-      returnDateGroup.style.display = "block";
-      dateTo.required = true;
-      if (!dateTo.value) {
-        dateTo.value = "2025-12-17";
-      }
-    }
-  };
-
-  tripTypeSelect.addEventListener("change", toggleReturnFields);
-  toggleReturnFields();
+  // ❌ REMOVED REDUNDANT TRIP TYPE TOGGLE LOGIC HERE. IT IS NOW IN travel_form.html
 
   // ✅ Unified form submit handler
   const form = document.getElementById("searchForm");
   const loading = document.getElementById("loading");
 
+  const extractIATA = (value) => {
+    // 1. Try to find the 3-letter code inside parentheses (e.g., "City (XXX)")
+    const matchParentheses = value.match(/\((\w{3})\)$/);
+    if (matchParentheses) {
+      return matchParentheses[1];
+    }
+
+    // 2. Check if the raw value is a 3-letter code (e.g., "JFK")
+    const trimmedValue = value.trim().toUpperCase();
+    if (trimmedValue.length === 3 && /^[A-Z]{3}$/.test(trimmedValue)) {
+      return trimmedValue;
+    }
+
+    // 3. Fallback (should ideally be a 3-letter code)
+    return trimmedValue;
+  };
+
   if (form) {
     form.addEventListener("submit", (e) => {
       e.preventDefault();
-
-      const extractIATA = (value) => {
-        const match = value.match(/\((\w{3})\)$/);
-        return match ? match[1] : value.trim();
-      };
 
       const origin = extractIATA(document.getElementById("origin_code").value);
       const destination = extractIATA(
@@ -109,32 +103,13 @@ $(document).ready(function () {
         loading.style.display = "block";
       }
 
-      // ✅ Replace this with fetch/render logic later
-      // window.open(deepLink, "_blank");
+      // We allow the form to submit to the Python backend to perform the search
+      form.submit(); // <-- Use this to submit the data to Flask endpoint /search-flights
+    });
+  }
+});
 
-//       fetch("/search-flights", {
-//         method: "POST",
-//         headers: { "Content-Type": "application/json" },
-//         body: JSON.stringify({
-//           origin,
-//           destination,
-//           dateFrom,
-//           dateTo,
-//         }),
-//       })
-//         .then((res) => res.json())
-//         .then((data) => {
-//           console.log("Flight results:", JSON.stringify(data, null, 2));
-//           renderFlightResults(data);
-//         })
-//         .catch((err) => {
-//           console.error("Flight search failed:", err);
-//           document.getElementById("results").innerHTML =
-//             "<p>😕 Flight search failed. Try again later.</p>";
-//         });
-//     });
-//   }
-// });
+// ... (renderFlightResults function remains the same) ...
 
 function renderFlightResults(data) {
   const container = document.getElementById("results");

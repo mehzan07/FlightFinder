@@ -14,6 +14,7 @@ from config import AFFILIATE_MARKER, API_TOKEN, HOST, USER_IP, USE_REAL_API, FEA
 from config import USE_AMADEUS, AMADEUS_API_KEY, FORCE_AMADEUS
 from amadeus_search import search_flights_amadeus
 from urllib.parse import urlencode
+from utils import clean_iata
 
 def search_flights(origin_code, destination_code, date_from_str, date_to_str, 
                     trip_type, adults=1, children=0, infants=0, cabin_class="economy", 
@@ -302,44 +303,36 @@ def search_flights_api(origin_code, destination_code, date_from_str, date_to_str
                     booking_link = raw_url
                 
             else:
-              # *** FIX: Use the configured HOST instead of hardcoded aviasales.com ***
-              # *** Now using urlencode for robust URL parameter handling ***
+            # 1. Use reliable inputs
+                origin = clean_iata(origin_code)
+                destination = clean_iata(destination_code)
+                adults_count = passengers.get('adults', 1)
             
-                last_flight = outbound_flights[-1]
-                origin = first_flight.get("departure", "")
-                destination = last_flight.get("arrival", "")
+                # 2. Build the search code WITH the passenger count at the end
+                # One-way result: "ARN1203LHR1" (11 characters)
+                search_code = f"{origin}{to_ddmm(date_from_str)}{destination}{adults_count}"
             
-            # 1. Build the Travelpayouts search code
-                search_code = f"{origin}{to_ddmm(date_from_str)}{destination}"
-            
+                # 3. If Round-trip, insert the return date BEFORE the passenger count
+                # Round-trip result: "ARN1203LHR17031" (15 characters)
                 if trip_type == "round-trip" and date_to_str:
-                    search_code += to_ddmm(date_to_str)
+                 search_code = f"{origin}{to_ddmm(date_from_str)}{destination}{to_ddmm(date_to_str)}{adults_count}"
             
-
-            # 2. Collect all URL parameters into a dictionary (ENSURE ALL VALUES ARE STRINGS)
+            # 4. Clean parameters (Removing gate_id to prevent launch failures)
                 params = {
                 "marker": AFFILIATE_MARKER,
-                "adults": str(passengers['adults']),     # Converted to string
-                "children": str(passengers['children']), # Converted to string
-                "infants": str(passengers['infants']),   # Converted to string
-                "trip_class": trip_class_code,           # Already a string
-                "gate_id": str(gate_id),                 # Converted to string
-            }
+                "adults": str(adults_count),
+                "children": str(passengers.get('children', 0)),
+                "infants": str(passengers.get('infants', 0)),
+                "trip_class": trip_class_code,
+                # gate_id is removed here for better compatibility
+                 }
             
                 if direct_only:
-                 params["transfers"] = "0"   # Set as string "0"
-                 params["direct"] = "true"   # Already a string
-
-            # 3. Encode parameters into a URL-safe string
-                query_string = urlencode(params)
+                    params["transfers"] = "0"
+                    params["direct"] = "true" 
             
-            # ... (rest of the code) ...
-
-                    # 4. Construct the final internal link using the encoded string
-                booking_link = (
-                    f"http://{HOST}/search/{search_code}?{query_string}" 
-                    )
-
+                query_string = urlencode(params)
+                booking_link = f"http://{HOST}/search/{search_code}?{query_string}"
             
             if match_key not in deep_link_map or (price is not None and price < deep_link_map[match_key].get('price', float('inf'))):
                 

@@ -302,3 +302,8 @@ def to_ddmm(date_str: Optional[str]) -> str:
     
     # Example: "2025-12-15" -> "1512"
     return date_str[8:10] + date_str[5:7]
+
+def clean_iata(value):
+    """Extracts 'ARN' from 'Stockholm (ARN)' or 'ARN'"""
+    match = re.search(r'\((\w{3})\)', value)
+    return match.group(1).upper() if match else value.strip().upper()[:3]

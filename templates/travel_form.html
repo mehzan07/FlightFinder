@@ -18,7 +18,6 @@
 
   <form id="searchForm" method="POST" action="/search-flights" class="card p-4 shadow-sm">
 
-    <!-- From -->
     <div class="mb-3">
       <label for="origin_code" class="form-label">From</label>
       <input type="text" class="form-control" id="origin_code" name="origin_code"
@@ -28,7 +27,6 @@
       <datalist id="origin_code-list"></datalist>
     </div>
 
-    <!-- To -->
     <div class="mb-3">
       <label for="destination_code" class="form-label">To</label>
       <input type="text" class="form-control" id="destination_code" name="destination_code"
@@ -38,7 +36,6 @@
       <datalist id="destination_code-list"></datalist>
     </div>
 
-    <!-- Trip Type -->
     <div class="mb-3">
       <label class="form-label" for="trip_type">🧭 Trip Type</label>
       <select id="trip_type" name="trip_type" class="form-select" required>
@@ -48,21 +45,18 @@
       </select>
     </div>
 
-    <!-- Direct Flights Only -->
     <div class="form-check mb-3">
       <input class="form-check-input" type="checkbox" id="direct_only" name="direct_only"
              {% if form_data and form_data.direct_only %}checked{% endif %}>
       <label class="form-check-label" for="direct_only">🛫 Show only direct flights</label>
     </div>
 
-    <!-- Departure Date -->
     <div class="mb-3">
       <label class="form-label" for="date_from">📅 Depart</label>
       <input type="date" id="date_from" name="date_from" class="form-control" required
              value="{{ session.last_search.departure if session.last_search else form_data.date_from if form_data else '2026-03-12' }}">
     </div>
 
-    <!-- Return Date -->
     <div class="mb-3" id="returnDateGroup"
          style="{% if form_data and form_data.trip_type == 'one-way' %}display:none;{% endif %}">
       <label class="form-label" for="date_to">📅 Return</label>
@@ -71,14 +65,12 @@
              {% if not form_data or form_data.trip_type == 'round-trip' %}required{% endif %}>
     </div>
 
-    <!-- Passengers -->
     <div class="mb-3">
       <label class="form-label" for="passengers">👥 Passengers</label>
       <input type="number" id="passengers" name="passengers" class="form-control" min="1" required
              value="{{ form_data.passengers if form_data else 1 }}">
     </div>
 
-    <!-- Cabin Class -->
     <div class="mb-3">
       <label class="form-label" for="cabin_class">💺 Cabin Class</label>
       <select id="cabin_class" name="cabin_class" class="form-select" required>
@@ -88,7 +80,6 @@
       </select>
     </div>
 
-    <!-- Max Flights -->
     <div class="mb-3">
       <label for="limit" class="form-label">Max Flights to Show</label>
       <select class="form-select" name="limit" id="limit">
@@ -99,7 +90,6 @@
       </select>
     </div>
 
-    <!-- Loading Spinner -->
     <div id="loading" class="text-center mb-3" style="display:none;">
       <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;">
         <span class="visually-hidden">Loading...</span>
@@ -112,6 +102,34 @@
 </div>
 
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+<script>
+$(document).ready(function() {
+    var $tripType = $('#trip_type');
+    var $returnDateGroup = $('#returnDateGroup');
+    var $returnDateInput = $('#date_to');
+
+    function toggleReturnDate() {
+        if ($tripType.val() === 'round-trip') {
+            $returnDateGroup.show();
+            // Set required for round-trip only
+            $returnDateInput.prop('required', true); 
+        } else {
+            $returnDateGroup.hide();
+            // Remove required for one-way/multi-city
+            $returnDateInput.prop('required', false);
+            // Clear value to prevent accidental submission of old data
+            $returnDateInput.val('');
+        }
+    }
+
+    // 1. Run on page load to set initial state correctly
+    toggleReturnDate(); 
+
+    // 2. Run whenever the trip type dropdown changes
+    $tripType.on('change', toggleReturnDate);
+});
+</script>
 <script src="/static/js/flightFinder.js"></script>
 
 {% endblock %}
