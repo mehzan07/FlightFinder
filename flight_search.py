@@ -302,37 +302,53 @@ def search_flights_api(origin_code, destination_code, date_from_str, date_to_str
                 else:
                     booking_link = raw_url
                 
-            else:
-            # 1. Use reliable inputs
-                origin = clean_iata(origin_code)
-                destination = clean_iata(destination_code)
-                adults_count = passengers.get('adults', 1)
+        else:
+            # 1. Start with the basics
+            origin1 = clean_iata(origin_code)
+            dest1 = clean_iata(destination_code)
+            date1 = to_ddmm(date_from_str)
+            adults_count = passengers.get('adults', 1)
+
+            # Base path: ORIGIN1 + DATE1 + DEST1
+            search_path = f"{origin1}{date1}{dest1}"
+
+            # 2. Handle Multi-city (The "Chain" Logic)
+            if trip_type == "multi-city":
+                from flask import request
+                dest2_raw = request.form.get('destination_code_2')
+                date2_raw = request.form.get('date_from_2')
+
+                if dest2_raw and date2_raw:
+                    dest2 = clean_iata(dest2_raw)
+                    date2 = to_ddmm(date2_raw)
+                    
+                    # IMPORTANT: Do NOT repeat the middle airport. 
+                    # We just add DATE2 + DEST2 to the end of the first leg.
+                    # Result: ARN1203LHR + 1503 + CDG = ARN1203LHR1503CDG
+                    search_path += f"{date2}{dest2}"
             
-                # 2. Build the search code WITH the passenger count at the end
-                # One-way result: "ARN1203LHR1" (11 characters)
-                search_code = f"{origin}{to_ddmm(date_from_str)}{destination}{adults_count}"
+            # 3. Handle Round-trip
+            elif trip_type == "round-trip" and date_to_str:
+                search_path += to_ddmm(date_to_str)
+
+            # 4. Final Search Code (Path + Adult Digit)
+            # This '1' at the end is the "Search" button trigger
+            search_code = f"{search_path}{adults_count}"
             
-                # 3. If Round-trip, insert the return date BEFORE the passenger count
-                # Round-trip result: "ARN1203LHR17031" (15 characters)
-                if trip_type == "round-trip" and date_to_str:
-                 search_code = f"{origin}{to_ddmm(date_from_str)}{destination}{to_ddmm(date_to_str)}{adults_count}"
-            
-            # 4. Clean parameters (Removing gate_id to prevent launch failures)
-                params = {
+            # 5. Build Link
+            params = {
                 "marker": AFFILIATE_MARKER,
                 "adults": str(adults_count),
                 "children": str(passengers.get('children', 0)),
                 "infants": str(passengers.get('infants', 0)),
                 "trip_class": trip_class_code,
-                # gate_id is removed here for better compatibility
-                 }
+            }
             
-                if direct_only:
-                    params["transfers"] = "0"
-                    params["direct"] = "true" 
+            query_string = urlencode(params)
+            booking_link = f"http://{HOST}/search/{search_code}?{query_string}"
             
-                query_string = urlencode(params)
-                booking_link = f"http://{HOST}/search/{search_code}?{query_string}"
+            # DEBUG: Check your console/log to see the generated code
+            print(f"DEBUG: Generated Search Code: {search_code}")
             
             if match_key not in deep_link_map or (price is not None and price < deep_link_map[match_key].get('price', float('inf'))):
                 

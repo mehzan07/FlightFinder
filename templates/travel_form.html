@@ -58,12 +58,26 @@
     </div>
 
     <div class="mb-3" id="returnDateGroup"
-         style="{% if form_data and form_data.trip_type == 'one-way' %}display:none;{% endif %}">
+        style="{% if form_data and form_data.trip_type == 'one-way' %}display:none;{% endif %}">
       <label class="form-label" for="date_to">📅 Return</label>
       <input type="date" id="date_to" name="date_to" class="form-control"
-             value="{{ session.last_search.return if session.last_search else form_data.date_to if form_data else '2026-03-17' }}"
-             {% if not form_data or form_data.trip_type == 'round-trip' %}required{% endif %}>
+            value="{{ session.last_search.return if session.last_search else form_data.date_to if form_data else '2026-03-17' }}"
+            {% if not form_data or form_data.trip_type == 'round-trip' %}required{% endif %}>
     </div>
+    
+<div id="multiCityGroup" style="display:none;" class="mt-4 p-3 border rounded bg-light">
+  <h5>✈️ Leg 2</h5>
+  <div class="mb-3">
+    <label for="destination_code_2" class="form-label">To (Second Destination)</label>
+    <input type="text" class="form-control" id="destination_code_2" name="destination_code_2" 
+           list="destination_code-list" placeholder="Where next?">
+  </div>
+  <div class="mb-3">
+    <label class="form-label" for="date_from_2">📅 Date for Leg 2</label>
+    <input type="date" id="date_from_2" name="date_from_2" class="form-control">
+  </div>
+</div>
+
 
     <div class="mb-3">
       <label class="form-label" for="passengers">👥 Passengers</label>
@@ -105,29 +119,56 @@
 
 <script>
 $(document).ready(function() {
+    // 1. Define the elements
     var $tripType = $('#trip_type');
     var $returnDateGroup = $('#returnDateGroup');
     var $returnDateInput = $('#date_to');
+    
+    // Multi-city elements (Ensure these IDs exist in your HTML)
+    var $multiCityGroup = $('#multiCityGroup');
+    var $dest2Input = $('#destination_code_2');
+    var $date2Input = $('#date_from_2');
 
-    function toggleReturnDate() {
-        if ($tripType.val() === 'round-trip') {
+    function toggleTripFields() {
+        var selected = $tripType.val();
+
+        // --- Reset everything first ---
+        $returnDateGroup.hide();
+        $multiCityGroup.hide();
+        $returnDateInput.prop('required', false);
+        $dest2Input.prop('required', false);
+        $date2Input.prop('required', false);
+
+        // --- Apply logic based on selection ---
+        if (selected === 'round-trip') {
             $returnDateGroup.show();
-            // Set required for round-trip only
-            $returnDateInput.prop('required', true); 
-        } else {
-            $returnDateGroup.hide();
-            // Remove required for one-way/multi-city
-            $returnDateInput.prop('required', false);
-            // Clear value to prevent accidental submission of old data
+            $returnDateInput.prop('required', true);
+            
+            // Clear multi-city values
+            $dest2Input.val('');
+            $date2Input.val('');
+
+        } else if (selected === 'multi-city') {
+            $multiCityGroup.show();
+            $dest2Input.prop('required', true);
+            $date2Input.prop('required', true);
+            
+            // Clear return date value
             $returnDateInput.val('');
+
+        } else {
+            // One-way: Clear all extra values
+            $returnDateInput.val('');
+            $dest2Input.val('');
+            $date2Input.val('');
         }
     }
 
-    // 1. Run on page load to set initial state correctly
-    toggleReturnDate(); 
+    // Run on page load
+    toggleTripFields(); 
 
-    // 2. Run whenever the trip type dropdown changes
-    $tripType.on('change', toggleReturnDate);
+    // Run on change
+    $tripType.on('change', toggleTripFields);
 });
 </script>
 <script src="/static/js/flightFinder.js"></script>
