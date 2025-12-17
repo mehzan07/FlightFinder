@@ -41,21 +41,33 @@ $(document).ready(function () {
 
   setupAirportAutocomplete("origin_code");
   setupAirportAutocomplete("destination_code");
+  setupAirportAutocomplete("destination_code_2");
 
   // 📅 Date logic
   const dateFrom = document.getElementById("date_from");
   const dateTo = document.getElementById("date_to");
-  // const returnDateGroup = document.getElementById("returnDateGroup"); // Removed as it's not used here
+  const dateFrom2 = document.getElementById("date_from_2");
 
-  if (dateFrom && dateTo) {
+  if (dateFrom) {
     const today = new Date().toISOString().split("T")[0];
     dateFrom.min = today;
+
     dateFrom.addEventListener("change", () => {
-      dateTo.min = dateFrom.value;
+      // 1. Update Return Date min (for Round-trip)
+      if (dateTo) {
+          dateTo.min = dateFrom.value;
+      }
+      // 2. Update Leg 2 Date min (for Multi-city)
+      if (dateFrom2) {
+          dateFrom2.min = dateFrom.value;
+          // If Leg 2 is now before Leg 1, reset it to match Leg 1
+          if (dateFrom2.value < dateFrom.value) {
+              dateFrom2.value = dateFrom.value;
+          }
+      }
     });
   }
 
-  // ❌ REMOVED REDUNDANT TRIP TYPE TOGGLE LOGIC HERE. IT IS NOW IN travel_form.html
 
   // ✅ Unified form submit handler
   const form = document.getElementById("searchForm");

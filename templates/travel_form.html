@@ -152,8 +152,15 @@ $(document).ready(function() {
             $multiCityGroup.show();
             $dest2Input.prop('required', true);
             $date2Input.prop('required', true);
-            
-            // Clear return date value
+            // ✅ Set the default values when multi-city is selected
+            if ($dest2Input.val() === '') {
+                $dest2Input.val('Paris (CDG)');
+            }
+            if ($date2Input.val() === '') {
+                $date2Input.val('2026-03-15'); // Format must be YYYY-MM-DD
+            }
+
+            // Clear return date value if it was there
             $returnDateInput.val('');
 
         } else {
