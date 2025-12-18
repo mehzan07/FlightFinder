@@ -57,27 +57,29 @@
              value="{{ session.last_search.departure if session.last_search else form_data.date_from if form_data else '2026-03-12' }}">
     </div>
 
-    <div class="mb-3" id="returnDateGroup"
-        style="{% if form_data and form_data.trip_type == 'one-way' %}display:none;{% endif %}">
+    <div class="mb-3" id="returnDateGroup">
       <label class="form-label" for="date_to">📅 Return</label>
       <input type="date" id="date_to" name="date_to" class="form-control"
-            value="{{ session.last_search.return if session.last_search else form_data.date_to if form_data else '2026-03-17' }}"
-            {% if not form_data or form_data.trip_type == 'round-trip' %}required{% endif %}>
+            value="{{ session.last_search.return if session.last_search else form_data.date_to if form_data else '2026-03-17' }}">
     </div>
     
-<div id="multiCityGroup" style="display:none;" class="mt-4 p-3 border rounded bg-light">
-  <h5>✈️ Leg 2</h5>
-  <div class="mb-3">
-    <label for="destination_code_2" class="form-label">To (Second Destination)</label>
-    <input type="text" class="form-control" id="destination_code_2" name="destination_code_2" 
-           list="destination_code-list" placeholder="Where next?">
-  </div>
-  <div class="mb-3">
-    <label class="form-label" for="date_from_2">📅 Date for Leg 2</label>
-    <input type="date" id="date_from_2" name="date_from_2" class="form-control">
-  </div>
-</div>
+    <div id="multiCityGroup" style="display:none;" class="mt-4 p-3 border rounded bg-light">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h5 class="mb-0">✈️ Leg 2</h5>
+            <button type="button" id="removeLeg2" class="btn-close" aria-label="Close" title="Remove Multi-city"></button>
+        </div>
 
+        <div class="mb-3">
+            <label for="destination_code_2" class="form-label">To (Second Destination)</label>
+            <input type="text" class="form-control" id="destination_code_2" name="destination_code_2" 
+                   list="destination_code-list" placeholder="Where next?">
+        </div>
+        
+        <div class="mb-3">
+            <label class="form-label" for="date_from_2">📅 Date for Leg 2</label>
+            <input type="date" id="date_from_2" name="date_from_2" class="form-control">
+        </div>
+    </div>
 
     <div class="mb-3">
       <label class="form-label" for="passengers">👥 Passengers</label>
@@ -111,73 +113,15 @@
       <p class="mt-2">🔄 Searching flights… hang tight!</p>
     </div>
 
-    <button type="submit" class="btn btn-primary">Search Flights</button>
+    <div class="d-flex align-items-center gap-2 mt-4">
+        <button type="submit" class="btn btn-primary">Search Flights</button>
+        <button type="button" id="clearFormBtn" class="btn btn-outline-secondary">🗑️ Clear All</button>
+    </div>
   </form>
 </div>
 
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
-<script>
-$(document).ready(function() {
-    // 1. Define the elements
-    var $tripType = $('#trip_type');
-    var $returnDateGroup = $('#returnDateGroup');
-    var $returnDateInput = $('#date_to');
-    
-    // Multi-city elements (Ensure these IDs exist in your HTML)
-    var $multiCityGroup = $('#multiCityGroup');
-    var $dest2Input = $('#destination_code_2');
-    var $date2Input = $('#date_from_2');
-
-    function toggleTripFields() {
-        var selected = $tripType.val();
-
-        // --- Reset everything first ---
-        $returnDateGroup.hide();
-        $multiCityGroup.hide();
-        $returnDateInput.prop('required', false);
-        $dest2Input.prop('required', false);
-        $date2Input.prop('required', false);
-
-        // --- Apply logic based on selection ---
-        if (selected === 'round-trip') {
-            $returnDateGroup.show();
-            $returnDateInput.prop('required', true);
-            
-            // Clear multi-city values
-            $dest2Input.val('');
-            $date2Input.val('');
-
-        } else if (selected === 'multi-city') {
-            $multiCityGroup.show();
-            $dest2Input.prop('required', true);
-            $date2Input.prop('required', true);
-            // ✅ Set the default values when multi-city is selected
-            if ($dest2Input.val() === '') {
-                $dest2Input.val('Paris (CDG)');
-            }
-            if ($date2Input.val() === '') {
-                $date2Input.val('2026-03-15'); // Format must be YYYY-MM-DD
-            }
-
-            // Clear return date value if it was there
-            $returnDateInput.val('');
-
-        } else {
-            // One-way: Clear all extra values
-            $returnDateInput.val('');
-            $dest2Input.val('');
-            $date2Input.val('');
-        }
-    }
-
-    // Run on page load
-    toggleTripFields(); 
-
-    // Run on change
-    $tripType.on('change', toggleTripFields);
-});
-</script>
 <script src="/static/js/flightFinder.js"></script>
 
 {% endblock %}

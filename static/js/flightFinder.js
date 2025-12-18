@@ -1,3 +1,6 @@
+/**
+ * Helper to build a direct search link (mainly for console logging)
+ */
 function buildAviasalesSearchLink(
   origin,
   destination,
@@ -14,10 +17,71 @@ function buildAviasalesSearchLink(
 
   return `https://www.aviasales.com/search/${searchPath}`;
 }
+
 $(document).ready(function () {
   console.log("flightFinder.js loaded");
 
-  // ✈️ Autocomplete setup
+  // --- 1. UI ELEMENT SELECTORS ---
+  const $tripType = $("#trip_type");
+  const $returnDateGroup = $("#returnDateGroup");
+  const $returnDateInput = $("#date_to");
+  const $multiCityGroup = $("#multiCityGroup");
+  const $dest2Input = $("#destination_code_2");
+  const $date2Input = $("#date_from_2");
+  const $dateFrom = $("#date_from");
+
+  // --- 2. TRIP TYPE TOGGLE LOGIC ---
+  function toggleTripFields() {
+    const selected = $tripType.val();
+
+    // Reset visibility and requirements
+    $returnDateGroup.hide();
+    $multiCityGroup.hide();
+    $returnDateInput.prop("required", false);
+    $dest2Input.prop("required", false);
+    $date2Input.prop("required", false);
+
+    if (selected === "round-trip") {
+      $returnDateGroup.show();
+      $returnDateInput.prop("required", true);
+    } else if (selected === "multi-city") {
+      $multiCityGroup.show();
+      $dest2Input.prop("required", true);
+      $date2Input.prop("required", true);
+
+      // Set defaults if empty
+      if ($dest2Input.val() === "") $dest2Input.val("Paris (CDG)");
+      if ($date2Input.val() === "") $date2Input.val("2026-03-15");
+    }
+  }
+
+  // Initialize and Listen for changes
+  toggleTripFields();
+  $tripType.on("change", toggleTripFields);
+
+  // --- 3. CLEAR FORM LOGIC ---
+  $("#clearFormBtn").on("click", function () {
+    // Manually empty the text inputs
+    $("#origin_code, #destination_code, #destination_code_2").val("");
+
+    // Manually empty the date inputs
+    $("#date_from, #date_to, #date_from_2").val("");
+
+    // Reset passengers to 1
+    $("#passengers").val(1);
+
+    // Force the dropdown back to 'one-way'
+    $tripType.val("one-way").trigger("change");
+
+    console.log("Form completely emptied and reset to One-way.");
+  });
+
+  // Close button for Multi-city Leg 2
+  $("#removeLeg2").on("click", function () {
+    $tripType.val("one-way").trigger("change");
+  });
+
+  // --- 4. AIRPORT AUTOCOMPLETE SETUP ---
   function setupAirportAutocomplete(inputId) {
     $("#" + inputId).on("input", function () {
       const query = $(this).val().trim().toLowerCase();
@@ -43,88 +107,63 @@ $(document).ready(function () {
   setupAirportAutocomplete("destination_code");
   setupAirportAutocomplete("destination_code_2");
 
-  // 📅 Date logic
-  const dateFrom = document.getElementById("date_from");
-  const dateTo = document.getElementById("date_to");
-  const dateFrom2 = document.getElementById("date_from_2");
-
-  if (dateFrom) {
+  // --- 5. DATE RESTRICTION LOGIC ---
+  if ($dateFrom.length) {
     const today = new Date().toISOString().split("T")[0];
-    dateFrom.min = today;
+    $dateFrom.attr("min", today);
 
-    dateFrom.addEventListener("change", () => {
-      // 1. Update Return Date min (for Round-trip)
-      if (dateTo) {
-          dateTo.min = dateFrom.value;
-      }
-      // 2. Update Leg 2 Date min (for Multi-city)
-      if (dateFrom2) {
-          dateFrom2.min = dateFrom.value;
-          // If Leg 2 is now before Leg 1, reset it to match Leg 1
-          if (dateFrom2.value < dateFrom.value) {
-              dateFrom2.value = dateFrom.value;
-          }
+    $dateFrom.on("change", function () {
+      const selectedDate = $(this).val();
+      // Update Return Date min
+      if ($returnDateInput.length) $returnDateInput.attr("min", selectedDate);
+      // Update Leg 2 Date min
+      if ($date2Input.length) {
+        $date2Input.attr("min", selectedDate);
+        if ($date2Input.val() < selectedDate) $date2Input.val(selectedDate);
       }
     });
   }
 
-
-  // ✅ Unified form submit handler
+  // --- 6. FORM SUBMISSION HANDLER ---
   const form = document.getElementById("searchForm");
   const loading = document.getElementById("loading");
 
   const extractIATA = (value) => {
-    // 1. Try to find the 3-letter code inside parentheses (e.g., "City (XXX)")
     const matchParentheses = value.match(/\((\w{3})\)$/);
-    if (matchParentheses) {
-      return matchParentheses[1];
-    }
+    if (matchParentheses) return matchParentheses[1];
 
-    // 2. Check if the raw value is a 3-letter code (e.g., "JFK")
     const trimmedValue = value.trim().toUpperCase();
-    if (trimmedValue.length === 3 && /^[A-Z]{3}$/.test(trimmedValue)) {
+    if (trimmedValue.length === 3 && /^[A-Z]{3}$/.test(trimmedValue))
       return trimmedValue;
-    }
 
-    // 3. Fallback (should ideally be a 3-letter code)
     return trimmedValue;
   };
 
   if (form) {
     form.addEventListener("submit", (e) => {
-      e.preventDefault();
-
-      const origin = extractIATA(document.getElementById("origin_code").value);
-      const destination = extractIATA(
-        document.getElementById("destination_code").value,
-      );
-
-      const dateFrom = document.getElementById("date_from").value;
-      const dateTo = document.getElementById("date_to").value;
-
-      const deepLink = buildAviasalesSearchLink(
-        origin,
-        destination,
-        dateFrom,
-        dateTo,
-      );
-      console.log("Form submitted");
-      console.log("Generated deep link:", deepLink);
-
+      // We don't preventDefault here because we want the form to submit to Flask,
+      // but we use it to show the loading spinner.
       if (loading) {
         loading.style.display = "block";
       }
 
-      // We allow the form to submit to the Python backend to perform the search
-      form.submit(); // <-- Use this to submit the data to Flask endpoint /search-flights
+      // Log details for debugging
+      const origin = extractIATA(document.getElementById("origin_code").value);
+      const destination = extractIATA(
+        document.getElementById("destination_code").value,
+      );
+      console.log("Submitting search for:", origin, "to", destination);
     });
   }
 });
 
-// ... (renderFlightResults function remains the same) ...
-
+/**
+ * Renders local results (if available)
+ */
 function renderFlightResults(data) {
   const container = document.getElementById("results");
+  if (!container) return;
+
   container.innerHTML = "<p>✅ Rendering started</p>";
 
   if (!data || !data.data || data.data.length === 0) {
@@ -132,20 +171,16 @@ function renderFlightResults(data) {
     return;
   }
 
-  console.table(data.data); // ✅ Easier to inspect in DevTools
-
   data.data.forEach((flight) => {
     const card = document.createElement("div");
     card.className = "flight-card p-3 mb-3 border rounded";
-
     card.innerHTML = `
-      <h5>Destination: ${flight.destination || "Unknown"}</h5>
-      <p>🛫 Depart: ${flight.depart_date || "N/A"}</p>
-      <p>⏱ Duration: ${flight.duration || "?"} mins</p>
-      <p>📏 Distance: ${flight.distance || "?"} km</p>
-      <p>✅ Actual: ${flight.actual ? "Yes" : "No"}</p>
-    `;
-
+            <h5>Destination: ${flight.destination || "Unknown"}</h5>
+            <p>🛫 Depart: ${flight.depart_date || "N/A"}</p>
+            <p>⏱ Duration: ${flight.duration || "?"} mins</p>
+            <p>📏 Distance: ${flight.distance || "?"} km</p>
+            <p>✅ Actual: ${flight.actual ? "Yes" : "No"}</p>
+        `;
     container.appendChild(card);
   });
 }
