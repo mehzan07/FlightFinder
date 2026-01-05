@@ -364,27 +364,6 @@ def is_token_match(token, airport):
     )
 
 
-@travel_bp.route("/book-flight", methods=["POST"])
-def book_flight():
-    """Handle flight booking initiation"""
-    flight = {
-        "id": request.form.get("flight_id"),
-        "origin": request.form.get("origin"),
-        "destination": request.form.get("destination"),
-        "departure_date": request.form.get("departure_date"),
-        "return_date": request.form.get("return_date"),
-        "price": request.form.get("price"),
-        "airline": request.form.get("airline"),
-        "flight_number": request.form.get("flight_number"),
-        "cabin_class": request.form.get("cabin_class"),
-        "stops": request.form.get("stops"),
-        "duration": request.form.get("duration"),
-        "vendor": request.form.get("vendor"),
-    }
-
-    logger.info(f"Booking flight: {flight}")
-    return render_template("travel_confirm.html", flight=flight)
-
 
 @travel_bp.route("/enter-passenger-info", methods=["POST"])
 def enter_passenger_info():
@@ -635,3 +614,17 @@ def redirect_to_aviasales(search_code):
 
     # 4. Redirect the user's browser to the external search URL
     return redirect(full_external_url, code=302)
+
+
+
+@travel_bp.route("/book-flight")
+def book_flight():
+    # This function handles the redirect to the loading page
+    target_url = request.args.get("url")
+    destination_name = request.args.get("dest", "your destination")
+    airline_name = request.args.get("airline", "our partner")
+    
+    return render_template("redirect.html", 
+                           url=target_url, 
+                           destination=destination_name, 
+                           airline=airline_name)

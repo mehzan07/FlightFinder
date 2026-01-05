@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Verifying Flight - Please Wait</title>
+    <style>
+      body {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        background-color: #f4f7f6;
+        margin: 0;
+      }
+      .card {
+        text-align: center;
+        background: white;
+        padding: 40px;
+        border-radius: 12px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        max-width: 400px;
+      }
+      .spinner {
+        border: 4px solid rgba(0, 0, 0, 0.1);
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        border-left-color: #09f;
+        animation: spin 1s linear infinite;
+        margin: 20px auto;
+      }
+      @keyframes spin {
+        0% {
+          transform: rotate(0deg);
+        }
+        100% {
+          transform: rotate(360deg);
+        }
+      }
+      h2 {
+        color: #333;
+        margin-bottom: 10px;
+      }
+      p {
+        color: #666;
+        font-size: 14px;
+      }
+    </style>
+    <script>
+      setTimeout(function () {
+        window.location.href = '{{ url }}'
+      }, 2000) // 2 second delay to feel like "verification"
+    </script>
+  </head>
+  <body>
+    <div class="card">
+      <div class="spinner"></div>
+      <h2>Verifying Live Price</h2>
+      <p>
+        We are connecting with <strong>{{ destination }}</strong> to find the best available seats and updated taxes.
+      </p>
+      <p>
+        <small>Redirecting you to our secure booking partner...</small>
+      </p>
+    </div>
+  </body>
+</html>

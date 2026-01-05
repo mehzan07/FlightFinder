@@ -169,79 +169,33 @@ def format_ddmm(date_str):
         logger.warning(f"Error formatting date {date_str}: {e}")
         return ""
 
+def build_flight_deeplink(flight, marker, currency="SEK"):
+    # Keep IS_PRODUCTION = False while on localhost
+    IS_PRODUCTION = True
+    MY_DOMAIN = "flights.softsolutionsahand.com" 
+    
+    domain = MY_DOMAIN if IS_PRODUCTION else "www.aviasales.com"
 
-def build_flight_deeplink(flight, marker):
-    """
-    Build an Aviasales deeplink for a specific flight result.
-    
-    Flight object can have:
-      - depart: "2025-12-10 14:30" (new API format)
-      - return: "2025-12-17 18:45" (new API format)
-      OR
-      - depart_date: "2025-12-10" (old format)
-      - return_date: "2025-12-17" (old format)
-    
-    Returns: https://www.aviasales.com/search/ARN1012LHR1712?marker=...
-    """
     try:
-        # If flight already has a link, use it
-        if flight.get("link"):
-            return flight["link"]
+        origin = flight.get("origin", "").upper()
+        destination = flight.get("destination", "").upper()
+        d_code = format_ddmm(flight.get("depart") or flight.get("depart_date"))
+        r_val = flight.get("return") or flight.get("return_date")
+        r_code = format_ddmm(r_val) if r_val else ""
         
-        if flight.get("deeplink"):
-            return flight["deeplink"]
+        # Format: ORG1505DEST1 (The '1' is for 1 Adult)
+        search_path = f"{origin}{d_code}{destination}{r_code}1"
         
-        # Get origin and destination
-        origin = flight.get("origin", "")
-        destination = flight.get("destination", "")
-        
-        if not origin or not destination:
-            logger.warning("Missing origin or destination for deeplink")
-            return f"https://www.aviasales.com?marker={marker}"
-        
-        # Get departure date (try multiple fields)
-        depart_date = None
-        if flight.get("depart"):
-            # Format: "2025-12-10 14:30" or "2025-12-10"
-            depart_date = flight["depart"]
-        elif flight.get("depart_date"):
-            depart_date = flight["depart_date"]
-        elif flight.get("departure_date"):
-            depart_date = flight["departure_date"]
-        
-        # Get return date (try multiple fields)
-        return_date = None
-        if flight.get("return"):
-            return_date = flight["return"]
-        elif flight.get("return_date"):
-            return_date = flight["return_date"]
-        
-        # Format dates to DDMM
-        depart_ddmm = format_ddmm(depart_date)
-        return_ddmm = format_ddmm(return_date) if return_date else ""
-        
-        if not depart_ddmm:
-            logger.warning(f"Could not format departure date: {depart_date}")
-            return f"https://www.aviasales.com?marker={marker}"
-        
-        # Build search URL
-        search_code = f"{origin}{depart_ddmm}{destination}"
-        if return_ddmm:
-            search_code += return_ddmm
-        
-        deeplink = f"https://www.aviasales.com/search/{search_code}"
-        
-        # Add marker
-        if marker:
-            deeplink += f"?marker={marker}"
-        
-        return deeplink
+        # Adding currency ensures the user sees SEK immediately on the next page
+        if IS_PRODUCTION:
+            return f"https://{domain}/?flightSearch={search_path}&marker={marker}&currency={currency}"
+        else:
+            return f"https://{domain}/search/{search_path}?marker={marker}&currency={currency}"
+
+    except Exception:
+        return f"https://{domain}?marker={marker}"
+
     
-    except Exception as e:
-        logger.error(f"Error building deeplink: {e}")
-        return f"https://www.aviasales.com?marker={marker}"
-    
-    # utils.py
 
 from datetime import timedelta
 import re
