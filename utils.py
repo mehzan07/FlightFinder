@@ -13,6 +13,8 @@ import requests
 from dotenv import load_dotenv
 
 load_dotenv()
+from config import AFFILIATE_MARKER
+marker = AFFILIATE_MARKER or os.getenv("AFFILIATE_MARKER", "")
 
 logger = logging.getLogger(__name__)
 nlp = spacy.load("en_core_web_sm")
@@ -120,83 +122,119 @@ def get_affiliate_link(deeplink):
 
 # === Helper Functions ===
 
-def extract_iata(value):
-    """
-    Extracts the IATA code from a string like 'Stockholm Arlanda (ARN)' → 'ARN'
-    If already just a code (e.g., 'ARN'), returns as-is.
-    """
-    if not value:
+
+def extract_iata(text):
+    if not text: return ""
+    # Look for 3 capital letters inside parentheses: (LHR)
+    match = re.search(r'\(([A-Z]{3})\)', text)
+    if match:
+        return match.group(1)
+    # If no parentheses, look for any 3 capital letters at the end or start
+    match = re.search(r'\b([A-Z]{3})\b', text)
+    if match:
+        return match.group(1)
+    # Fallback: just take the last 3 chars if they look like a code
+    clean = text.strip()
+    if len(clean) >= 3:
+        return clean[-3:]
+    return text
+
+
+
+
+def format_ddmm(date_val):
+    if not date_val: 
         return ""
     
-    # Check if format is "City Name (CODE)"
-    if "(" in value and ")" in value:
-        code = value.split("(")[-1].replace(")", "").strip()
-        return code.upper()
+    # 1. Handle if it's already a datetime object
+    if isinstance(date_val, datetime):
+        return date_val.strftime("%d%m")
     
-    # If already a 3-letter code
-    value = value.strip().upper()
-    if len(value) == 3 and value.isalpha():
-        return value
-    
-    return value
-
-
-def format_ddmm(date_str):
-    """
-    Convert YYYY-MM-DD to DDMM format for Aviasales deeplink.
-    Examples:
-      - "2025-12-10" → "1012"
-      - "2025-01-05" → "0501"
-    """
     try:
-        if not date_str:
-            return ""
+        # 2. Clean the string: Remove time (T00:00) and extra spaces
+        # Works for "2025-12-10T10:30" or "2025-12-10 10:30"
+        date_str = str(date_val).split('T')[0].split(' ')[0].strip()
         
-        # Handle datetime objects
-        if isinstance(date_str, datetime):
-            return date_str.strftime("%d%m")
+        # 3. Handle YYYY-MM-DD format
+        if '-' in date_str:
+            parts = date_str.split('-')
+            if len(parts) == 3:
+                day = parts[2].zfill(2)   # Ensures "5" becomes "05"
+                month = parts[1].zfill(2) # Ensures "1" becomes "01"
+                return f"{day}{month}"
         
-        # Handle "YYYY-MM-DD HH:MM" format (extract date part)
-        if " " in date_str:
-            date_str = date_str.split(" ")[0]
-        
-        # Parse YYYY-MM-DD
-        if len(date_str) == 10 and date_str[4] == "-" and date_str[7] == "-":
-            return date_str[8:10] + date_str[5:7]  # DDMM
-        
-        return ""
+        # 4. Fallback: Try a generic parse if format is weird (e.g., "12/10/2025")
+        parsed = dateparser.parse(date_str)
+        if parsed:
+            return parsed.strftime("%d%m")
+            
     except Exception as e:
-        logger.warning(f"Error formatting date {date_str}: {e}")
-        return ""
+        logger.warning(f"Could not format date '{date_val}': {e}")
+        
+    return ""
+    
+    
+from utils import extract_iata # Ensure this is imported
+
 
 def build_flight_deeplink(flight, marker, currency="SEK"):
-    # Keep IS_PRODUCTION = False while on localhost
-    IS_PRODUCTION = True
-    MY_DOMAIN = "flights.softsolutionsahand.com" 
-    
-    domain = MY_DOMAIN if IS_PRODUCTION else "www.aviasales.com"
-
+    """
+    Reconstructed 'Golden Version' link builder.
+    Uses the exact path-based logic that worked in version 4e0f30e.
+    """
     try:
-        origin = flight.get("origin", "").upper()
-        destination = flight.get("destination", "").upper()
-        d_code = format_ddmm(flight.get("depart") or flight.get("depart_date"))
-        r_val = flight.get("return") or flight.get("return_date")
-        r_code = format_ddmm(r_val) if r_val else ""
+        trip_type = flight.get("trip_type", "round-trip")
+        adults_count = str(flight.get("adults") or flight.get("passengers") or "1")
         
-        # Format: ORG1505DEST1 (The '1' is for 1 Adult)
-        search_path = f"{origin}{d_code}{destination}{r_code}1"
+        # 1. Start with the basics (Leg 1)
+        origin1 = clean_iata(str(flight.get("origin_code") or flight.get("origin", "")))
+        dest1 = clean_iata(str(flight.get("destination_code") or flight.get("destination", "")))
         
-        # Adding currency ensures the user sees SEK immediately on the next page
-        if IS_PRODUCTION:
-            return f"https://{domain}/?flightSearch={search_path}&marker={marker}&currency={currency}"
-        else:
-            return f"https://{domain}/search/{search_path}?marker={marker}&currency={currency}"
+        # Extract date and convert to DDMM (e.g., 2025-12-15 -> 1512)
+        raw_date1 = flight.get("depart_date") or flight.get("depart")
+        date1 = format_ddmm(raw_date1)
 
-    except Exception:
-        return f"https://{domain}?marker={marker}"
+        # Base path: ORIGIN + DATE + DEST
+        search_path = f"{origin1}{date1}{dest1}"
+
+        # 2. Handle Multi-city (The "Chain" Logic from old flight_search.py)
+        if trip_type == "multi-city":
+            # The old code just appends DATE2 + DEST2 to the end
+            raw_date2 = flight.get("depart_date_2") or flight.get("date_2")
+            dest2_raw = flight.get("destination_code_2") or flight.get("destination_2")
+            
+            if raw_date2 and dest2_raw:
+                date2 = format_ddmm(raw_date2)
+                dest2 = clean_iata(str(dest2_raw))
+                # Result: ARN1203LHR + 1503 + CDG = ARN1203LHR1503CDG
+                search_path += f"{date2}{dest2}"
+
+        # 3. Handle Round-trip
+        elif trip_type == "round-trip":
+            raw_date_to = flight.get("return_date") or flight.get("return")
+            if raw_date_to:
+                search_path += format_ddmm(raw_date_to)
+
+        # 4. Final Search Code (Path + Adult Digit)
+        # In the old code, the adult count is the LAST character
+        search_code = f"{search_path}{adults_count}"
+
+        # 5. Build Final Link
+        # Note: We use the HOST from config if available, or default to aviasales.com
+        from config import HOST
+        base_host = HOST if 'HOST' in locals() else "www.aviasales.com"
+        
+        return f"https://{base_host}/search/{search_code}?marker={marker}&currency={currency}"
+
+    except Exception as e:
+        logger.error(f"Error building deeplink: {e}")
+        return f"https://www.aviasales.com/?marker={marker}"
+
+
+
+
 
     
-
 from datetime import timedelta
 import re
 from typing import Optional

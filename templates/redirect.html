@@ -2,6 +2,7 @@
 <html>
   <head>
     <title>Verifying Flight - Please Wait</title>
+    <meta http-equiv="refresh" content="4;url={{ url|safe }}" />
     <style>
       body {
         font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -44,24 +45,37 @@
       p {
         color: #666;
         font-size: 14px;
+        line-height: 1.5;
       }
     </style>
-    <script>
-      setTimeout(function () {
-        window.location.href = '{{ url }}'
-      }, 2000) // 2 second delay to feel like "verification"
-    </script>
   </head>
   <body>
     <div class="card">
       <div class="spinner"></div>
       <h2>Verifying Live Price</h2>
       <p>
-        We are connecting with <strong>{{ destination }}</strong> to find the best available seats and updated taxes.
+        Connecting to find the best available seats and updated taxes for <strong>{{ destination }}</strong>.
       </p>
       <p>
         <small>Redirecting you to our secure booking partner...</small>
       </p>
     </div>
+
+    <script>
+      // The |safe filter is CRITICAL here to prevent the URL from breaking
+      const targetUrl = '{{ url|safe }}'
+      
+      if (targetUrl && targetUrl !== '') {
+        setTimeout(function () {
+          window.location.replace(targetUrl)
+        }, 2500)
+      } else {
+        console.error('Redirect URL is missing')
+        // Fallback if URL is empty
+        setTimeout(function () {
+          window.location.href = '/travel-ui'
+        }, 3000)
+      }
+    </script>
   </body>
 </html>
