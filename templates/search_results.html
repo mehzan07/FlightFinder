@@ -11,50 +11,56 @@
         .header { background: white; padding: 24px; border-radius: 12px; margin-bottom: 24px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
         .header h1 { color: #333; font-size: 28px; margin-bottom: 12px; }
         .route-info { color: #666; font-size: 16px; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
-        .arrow { color: #667eea; font-weight: bold; }
+        .arrow { color: #667eea; font-weight: bold; font-size: 1.2em; }
         .results-count { background: #f0f4ff; padding: 12px 20px; border-radius: 8px; margin-bottom: 20px; color: #333; font-weight: 500; }
         .flight-card { background: white; border-radius: 12px; padding: 24px; margin-bottom: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); border-left: 4px solid #667eea; }
         .flight-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 16px; border-bottom: 2px solid #f0f0f0; }
+        .airline-info { display: flex; align-items: center; }
         .airline-logo { width: 48px; height: 48px; background: #f5f5f5; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-weight: bold; color: #667eea; }
         .price-tag { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 12px 24px; border-radius: 8px; font-size: 24px; font-weight: bold; }
         .flight-details { display: grid; grid-template-columns: 1fr auto 1fr; gap: 20px; align-items: center; margin-bottom: 16px; }
         .segment-time { font-size: 28px; font-weight: bold; color: #333; }
-        .segment-airport { font-weight: bold; color: #666; }
-        .path-line { width: 100%; height: 2px; background: #ddd; position: relative; }
+        .segment-airport { font-weight: bold; color: #666; font-size: 14px; }
+        .path-line { width: 100%; height: 2px; background: #ddd; position: relative; min-width: 100px; }
         .plane-icon { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 4px 8px; }
-        .direct-badge { background: #d4edda; color: #155724; padding: 6px 16px; border-radius: 12px; font-size: 13px; font-weight: 700; }
+        .direct-badge { background: #d4edda; color: #155724; padding: 4px 12px; border-radius: 12px; font-size: 11px; font-weight: 700; }
         .book-btn { background: linear-gradient(135deg, #28a745 0%, #218838 100%); color: white; padding: 14px 32px; text-decoration: none; border-radius: 8px; font-size: 16px; font-weight: 600; display: inline-block; transition: transform 0.2s; }
         .book-btn:hover { transform: scale(1.02); }
         .no-results { background: white; padding: 60px; border-radius: 12px; text-align: center; }
-        .multi-city-divider { border: 0; border-top: 1px dashed #ddd; margin: 15px 0; }
-        .leg-label { color: #764ba2; font-size: 12px; font-weight: bold; text-transform: uppercase; margin-bottom: 5px; }
+        .multi-city-divider { border: 0; border-top: 1px dashed #ddd; margin: 20px 0; }
+        .leg-label { color: #764ba2; font-size: 12px; font-weight: bold; text-transform: uppercase; margin-bottom: 10px; display: block; }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
-    <h1>✈️ Flight Search Results</h1>
-    <div class="route-info">
-        <span><strong>{{ origin }}</strong></span>
-        <span class="arrow">→</span>
-        <span><strong>{{ destination }}</strong></span>
-        
-        {% if destination_2 %}
-            <span class="arrow">→</span>  
-            <span><strong>{{ destination_2 }}</strong></span>
-        {% endif %}
-
-        {% if return_date and not destination_2 %}
-            <span class="arrow">↺</span>
+            <h1>✈️ Flight Search Results</h1>
+                    <div class="route-info">
             <span><strong>{{ origin }}</strong></span>
-        {% endif %}
 
-        {% if depart_date %}
-            <span style="margin-left: 10px; color: #999;">| 📅 {{ depart_date }}</span>
-            {% if return_date %} - 📅 {{ return_date }}{% endif %}
-        {% endif %}
+            {% if destination_2 %}
+                <span class="arrow">→</span>
+                <span><strong>{{ destination }}</strong></span>
+                <span class="arrow">→</span>
+                <span><strong>{{ destination_2 }}</strong></span>
+            {% elif return_date %}
+                <span class="arrow">⇄</span>
+                <span><strong>{{ destination }}</strong></span>
+            {% else %}
+                <span class="arrow">→</span>
+                <span><strong>{{ destination }}</strong></span>
+            {% endif %}
+
+            <span style="margin-left: 10px; color: #999;">
+                | 📅 {{ depart_date }} 
+                {% if destination_2 %}
+                    & 📅 {{ depart_date_2 }}
+                {% elif return_date %}
+                    - 📅 {{ return_date }}
+                {% endif %}
+            </span>
+        </div>
     </div>
-</div>
 
         {% if flights %}
             <div class="results-count">Found {{ flights|length }} flights</div>
@@ -63,62 +69,63 @@
                 <div class="flight-card">
                     <div class="flight-header">
                         <div class="airline-info">
-                            <div class="airline-logo" style="display: flex; flex-direction: column; font-size: 10px;">
+                            <div class="airline-logo">
                                 {{ flight.airline[:2] if flight.airline else '✈️' }}
                             </div>
-                            <div style="margin-left: 10px;">
-                                <div class="airline-name" style="font-weight: bold;">{{ flight.airline or 'Unknown Airline' }}</div>
-                                <div style="font-size: 12px; color: #999;">{{ flight.trip_type|capitalize if flight.trip_type else 'Round-trip' }}</div>
+                            <div style="margin-left: 15px;">
+                                <div class="airline-name" style="font-weight: bold;">{{ flight.airline or 'Multiple Airlines' }}</div>
+                                <div style="font-size: 12px; color: #764ba2; font-weight: bold;">{{ flight.trip_type|replace('-', ' ')|upper }}</div>
                             </div>
                         </div>
-                        <div class="price-tag">{{ flight.price or flight.value }} {{ currency }}</div>
+                        <div class="price-tag">{{ flight.price or flight.value }} {{ currency or 'SEK' }}</div>
                     </div>
 
-                    <div class="leg-label">Departure Flight</div>
+                    <span class="leg-label">Departure Flight</span>
                     <div class="flight-details">
                         <div class="flight-segment">
                             <div class="segment-time">{{ (flight.depart.split(' ')[1][:5]) if (flight.depart and ' ' in flight.depart) else '--:--' }}</div>
-                            <div class="segment-airport">{{ flight.origin or origin }}</div>
+                            <div class="segment-airport">{{ flight.origin_name or flight.origin or origin }}</div>
                         </div>
                         <div class="flight-path">
-                            <div class="duration" style="text-align: center; font-size: 12px; color: #666;">{{ flight.duration or 'N/A' }}</div>
+                            <div class="duration" style="text-align: center; font-size: 11px; color: #666; margin-bottom: 4px;">{{ flight.duration or 'N/A' }}</div>
                             <div class="path-line"><span class="plane-icon">✈️</span></div>
-                            <div class="stops-info" style="text-align: center; margin-top: 5px;">
-                                {% if (flight.stops == 0 or flight.number_of_changes == 0) %}
+                            <div class="stops-info" style="text-align: center; margin-top: 8px;">
+                                {% if flight.stops == 0 or flight.number_of_changes == 0 %}
                                     <span class="direct-badge">DIRECT</span>
                                 {% else %}
-                                    <span style="font-size: 12px; color: #666;">{{ flight.stops or flight.number_of_changes }} stop(s)</span>
+                                    <span style="font-size: 11px; color: #666;">{{ flight.stops or flight.number_of_changes }} stop(s)</span>
                                 {% endif %}
                             </div>
                         </div>
                         <div class="flight-segment" style="text-align: right;">
                             <div class="segment-time">{{ flight.arrival_time or '--:--' }}</div>
-                            <div class="segment-airport">{{ flight.destination or destination }}</div>
+                            <div class="segment-airport">{{ flight.destination_name or flight.destination or destination }}</div>
                         </div>
                     </div>
 
                     {% if flight.trip_type == 'multi-city' %}
                         <hr class="multi-city-divider">
-                        <div class="leg-label">Second Leg</div>
+                        <span class="leg-label">Second Leg</span>
                         <div class="flight-details">
                             <div class="flight-segment">
-                                <div class="segment-time">--:--</div> <div class="segment-airport">{{ flight.origin_2 }}</div>
+                                <div class="segment-time">{{ flight.depart_time_2 or '--:--' }}</div> 
+                                <div class="segment-airport">{{ flight.origin_2_name or flight.origin_2 or destination }}</div>
                             </div>
                             <div class="flight-path">
-                                <div class="duration" style="text-align: center; font-size: 12px; color: #666;">Date: {{ flight.depart_date_2 }}</div>
+                                <div class="duration" style="text-align: center; font-size: 11px; color: #666; margin-bottom: 4px;">Date: {{ flight.depart_date_2 or 'N/A' }}</div>
                                 <div class="path-line"><span class="plane-icon">✈️</span></div>
                             </div>
                             <div class="flight-segment" style="text-align: right;">
-                                <div class="segment-time">--:--</div>
-                                <div class="segment-airport">{{ flight.destination_2 }}</div>
+                                <div class="segment-time">{{ flight.arrival_time_2 or '--:--' }}</div>
+                                <div class="segment-airport">{{ flight.destination_2_name or flight.destination_2 }}</div>
                             </div>
                         </div>
                     {% endif %}
 
-                    <div style="text-align: right; margin-top: 20px;">
+                    <div style="text-align: right; margin-top: 25px; border-top: 1px solid #f0f0f0; padding-top: 20px;">
                         <a href="{{ url_for('travel.book_flight', url=(flight.deeplink or flight.link), dest=destination, airline=(flight.airline or 'Airline Partner')) }}" 
                            class="book-btn">
-                            Check Best Deal & Book →
+                            Book This Journey →
                         </a>
                     </div>
                 </div>

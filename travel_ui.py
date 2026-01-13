@@ -136,6 +136,8 @@ def search_flights():
     origin = extract_iata(request.form.get("origin_code", ""))
     destination = extract_iata(request.form.get("destination_code", ""))
     depart_date = request.form.get("date_from", "")
+    destination_2 = request.form.get("destination_code_2")
+    depart_date_2 = request.form.get("date_from_2")
     return_date = request.form.get("date_to", "")
     trip_type = request.form.get("trip_type", "round-trip")
     passengers = request.form.get("passengers", "1")
@@ -200,7 +202,9 @@ def search_flights():
             flights=safe_flights[:limit],
             origin=origin,
             destination=destination,
+            destination_2=destination_2,    
             depart_date=depart_date,
+            depart_date_2=depart_date_2,    
             return_date=return_date,
             currency="EUR",
             direct_only=direct_only
@@ -220,7 +224,8 @@ def flight_results():
     
     trip_type = request.args.get('trip_type', 'one-way')
     origin_2 = request.args.get('origin_2', '').upper()
-    destination_2 = request.args.get('destination_2', '').upper()
+   # destination_2 = request.args.get('destination_2', '').upper()
+    destination_2 = (request.form.get('destination_code_2') or request.args.get('destination_2')).upper()
     date_from_2 = request.args.get('date_from_2')
     
     currency = request.args.get('currency', 'EUR')
