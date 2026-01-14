@@ -1,73 +1,68 @@
-
 import logging
 import os
 from dotenv import load_dotenv
 
-# Load .env file
 load_dotenv()
 
 def get_env_var(name, default=None):
-    """
-    Modified to be 'softer'. 
-    It returns a default value instead of crashing if a variable is missing.
-    """
     value = os.getenv(name, default)
     if value is None:
-        # We log a warning to the console so you can see it in your PythonAnywhere logs
         print(f"⚠️ WARNING: {name} is not set in the environment. Using default: {default}")
     return value
 
-# === Local Development & Server Settings ===
-FLASK_APP = get_env_var("FLASK_APP", "app.py")
-FLASK_ENV = get_env_var("FLASK_ENV", "production")
-# Defaulting to 10000 but PythonAnywhere will ignore this and use its own port
-PORT = int(get_env_var("PORT", 10000))
-IS_LOCAL = get_env_var("IS_LOCAL", "false").lower() == "true"
-DEBUG_MODE = get_env_var("DEBUG_MODE", "False").lower() == "true"
-HOST = get_env_var("HOST", "0.0.0.0")
+def get_env_boolean(var_name, default=False):
+    val = os.getenv(var_name, str(default)).lower()
+    return val in ('true', '1', 't', 'yes')
 
-# === Feature Flags ===
-FEATURED_FLIGHT_LIMIT = int(get_env_var("FEATURED_FLIGHT_LIMIT", 5))
+# === Environment Detection ===
+# If IS_LOCAL is false, we assume we are on PythonAnywhere
+IS_LOCAL = get_env_boolean("IS_LOCAL", default=False)
+if IS_LOCAL:
+    # Use 127.0.0.1 for local links
+    HOST = "http://127.0.0.1:5000"
+else:
+    HOST = f"https://{PA_USER}.pythonanywhere.com"
+    
+DEBUG_MODE = get_env_boolean("DEBUG_MODE", default=False)
+HOST = get_env_var("HOST", "0.0.0.0")
+USER_IP = get_env_var("USER_IP", "127.0.0.1")
+
+# === Server & URL Settings ===
+# This dynamically sets your domain so links don't break
+PA_USER = get_env_var("PYTHONANYWHERE_USER", "username")
+if IS_LOCAL:
+    BASE_URL = "http://127.0.0.1:5000"
+    # Local-friendly CDN (Skyscanner)
+    LOGO_CDN = "https://logos.skyscnr.com/images/airlines/favicon/"
+else:
+    BASE_URL = f"https://{PA_USER}.pythonanywhere.com"
+    # Production CDN (Aviasales High-Load)
+    LOGO_CDN = "https://pics.avs.io/hl/100/40/"
 
 # === Travelpayouts API Credentials ===
 API_TOKEN = get_env_var("API_TOKEN")
 AFFILIATE_MARKER = get_env_var("AFFILIATE_MARKER")
-USER_IP = get_env_var("USER_IP", "127.0.0.1")
-USE_REAL_API = get_env_var("USE_REAL_API", "true").lower() == "true"
+USE_REAL_API = get_env_boolean("USE_REAL_API", default=True)
 
-# === Amadeus configuration ===
-AMADEUS_API_KEY = os.getenv("AMADEUS_API_KEY")
-AMADEUS_API_SECRET = os.getenv("AMADEUS_API_SECRET")
-AMADEUS_BASE_URL = os.getenv("AMADEUS_BASE_URL", "https://test.api.amadeus.com")
-USE_AMADEUS = os.getenv("USE_AMADEUS", "False") == "True"
-
-# Helper function for boolean variables
-def get_env_boolean(var_name, default=False):
-    val = os.getenv(var_name, str(default)).lower()
-    return val in ('true', '1', 't')
-
+# === Amadeus Configuration ===
+AMADEUS_API_KEY = get_env_var("AMADEUS_API_KEY")
+AMADEUS_API_SECRET = get_env_var("AMADEUS_API_SECRET")
+AMADEUS_BASE_URL = get_env_var("AMADEUS_BASE_URL", "https://test.api.amadeus.com")
+USE_AMADEUS = get_env_boolean("USE_AMADEUS", default=True)
 FORCE_AMADEUS = get_env_boolean("FORCE_AMADEUS", default=False)
+
+# === Other Settings ===
+FEATURED_FLIGHT_LIMIT = int(get_env_var("FEATURED_FLIGHT_LIMIT", 4))
 
 # === Logging Configuration ===
 def setup_logging():
-    """Configure logging for the application"""
     log_level = logging.DEBUG if DEBUG_MODE else logging.INFO
-
     logging.basicConfig(
         level=log_level,
         format='%(asctime)s [%(levelname)s] %(name)s: %(message)s',
-        handlers=[
-            logging.StreamHandler(),
-        ]
+        handlers=[logging.StreamHandler()]
     )
 
-def get_logger(name):
-    """Get a logger instance for a specific module"""
-    return logging.getLogger(name)
-
-# Initialize logging
 setup_logging()
-
-if __name__ == "__main__":
-    print("Testing config loading...")
-    print(f"DATABASE: Removed (Running in Database-Free mode)")
+def get_logger(name):
+    return logging.getLogger(name)

@@ -12,6 +12,7 @@ logger = logs
 
 from config import AFFILIATE_MARKER, API_TOKEN, HOST, USER_IP, USE_REAL_API, FEATURED_FLIGHT_LIMIT, DEBUG_MODE
 from config import USE_AMADEUS, AMADEUS_API_KEY, FORCE_AMADEUS
+
 from amadeus_search import search_flights_amadeus
 from urllib.parse import urlencode
 from utils import clean_iata

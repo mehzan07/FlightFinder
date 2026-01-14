@@ -2,7 +2,17 @@ from flask import Blueprint, redirect, render_template, request, jsonify, url_fo
 import requests
 from travel import travel_chatbot
 from datetime import datetime
-from config import DEBUG_MODE, FEATURED_FLIGHT_LIMIT,IS_LOCAL
+import config  # Simple and clean
+
+from urllib.parse import urlparse  # Required for cleaning the 404 links
+
+# Then use it like this:
+if config.IS_LOCAL:
+    print("Running locally")
+
+limit = config.FEATURED_FLIGHT_LIMIT
+
+
 import json
 import traceback
 import os
@@ -129,104 +139,109 @@ def travel_ui():
 
     return render_template("travel_form.html", form_data=form_data, flights=flights, errors=errors)
 
+
+
+
 @travel_bp.route("/search-flights", methods=["POST"])
 def search_flights():
     """Handler for the flight search form submission"""
     logger.info("search_flights route hit")
     
-    origin = extract_iata(request.form.get("origin_code", ""))
-    destination = extract_iata(request.form.get("destination_code", ""))
+    # 1. Get Form Data
+    origin_raw = extract_iata(request.form.get("origin_code", ""))
+    dest1_raw = extract_iata(request.form.get("destination_code", ""))
+    dest2_raw = extract_iata(request.form.get("destination_code_2", ""))
+    
     depart_date = request.form.get("date_from", "")
-    destination_2 = request.form.get("destination_code_2")
     depart_date_2 = request.form.get("date_from_2")
     return_date = request.form.get("date_to", "")
     trip_type = request.form.get("trip_type", "round-trip")
     passengers = request.form.get("passengers", "1")
     cabin_class = request.form.get("cabin_class", "economy")
-    limit = int(request.form.get("limit", 4))
+    
+    # Use config for default limit if not provided in form
+    limit = int(request.form.get("limit", config.FEATURED_FLIGHT_LIMIT))
     direct_only = request.form.get("direct_only") == "on"
 
-    if not origin or not destination or not depart_date:
+    # 2. Display Names for Header
+    display_origin = get_city_name(origin_raw)
+    display_dest1 = get_city_name(dest1_raw)
+    display_dest2 = get_city_name(dest2_raw) if dest2_raw else None
+
+    # Basic Validation
+    if not origin_raw or not dest1_raw or not depart_date:
         return render_template("travel_form.html", 
                                errors=["Please provide origin, destination, and departure date"],
                                form_data=request.form)
 
     try:
+        # 3. Perform the API Search
         flights = search_flights_func(
-            origin, destination, depart_date,
+            origin_raw, dest1_raw, depart_date,
             return_date if trip_type == "round-trip" else None,
             trip_type=trip_type, adults=int(passengers),
             cabin_class=cabin_class, limit=limit, direct_only=direct_only
         )
-        # Determine the base URL dynamically
-        if IS_LOCAL:
-            # Forces local address even if the request headers are messy
-            base_url = "http://127.0.0.1:5000"
-        else:
-            # Automatically detects your PythonAnywhere URL
-            base_url = request.host_url.rstrip('/')
 
-        marker = AFFILIATE_MARKER or os.getenv("AFFILIATE_MARKER", "")
         safe_flights = []
-        # Get trip type from the form once before the loop
-        trip_type = request.form.get("trip_type", "round-trip")
-        passengers = request.form.get("passengers", "1")
 
+        # 4. Process Each Flight for the Template
         for flight in flights:
             if isinstance(flight, dict):
-                # 1. Inject the necessary data for Multi-City into the flight object
+                # A. Inject basic trip data
                 flight["trip_type"] = trip_type
                 flight["passengers"] = passengers
                 
+                # B. CLEAN AIRLINE CODE: Ensure it is exactly 2 letters
+                raw_val = flight.get("airline_code") or flight.get("airline") or "XX"
+                clean_code = str(raw_val).strip().upper()[:2]
+                flight["airline_code"] = clean_code
+
+                # C. DYNAMIC LOGO URL: Sets CDN based on config (Local vs PA)
+                flight["logo_url"] = f"{config.LOGO_CDN}{clean_code}.png"
+
+                # D. Handle Multi-City specific data
                 if trip_type == "multi-city":
-                    # These must match the 'name' attributes in your HTML form
                     flight["origin_2"] = request.form.get("origin_code_2")
                     flight["destination_2"] = request.form.get("destination_code_2")
                     flight["depart_date_2"] = request.form.get("date_from_2")
 
-                # 2. Rebuild the link with the full data
-                new_link = build_flight_deeplink(flight, marker)
+                # E. REBUILD AND CLEAN DEEPLINK (Fixes the 404 error)
+                raw_link = build_flight_deeplink(flight, config.AFFILIATE_MARKER)
                 
-                # 3. Clean the domain to keep it local
-                if "pythonanywhere.com" in new_link:
-                    new_link = new_link.split(".com")[-1]
+                # Use urlparse to strip any domain (like 0.0.0.0) and keep only path/query
+                parsed = urlparse(raw_link)
+                clean_link = parsed.path  # Result: "/search/ARN123..."
+                if parsed.query:
+                    clean_link += f"?{parsed.query}" # Result: "/search/ARN123...?currency=SEK"
                 
-                if not new_link.startswith("/"):
-                    # Ensure it doesn't result in //search
-                    new_link = "/" + new_link.lstrip("/")
+                # Ensure it's a relative path
+                if not clean_link.startswith("/"):
+                    clean_link = "/" + clean_link
 
-                flight["deeplink"] = new_link
+                flight["deeplink"] = clean_link
                 safe_flights.append(flight)
-                
-                # 1. Keep raw codes for the API and Link Builder
-                origin_raw = extract_iata(request.form.get("origin_code", ""))
-                dest1_raw = extract_iata(request.form.get("destination_code", ""))
-                dest2_raw = extract_iata(request.form.get("destination_code_2", ""))
-                
-                # 2. Convert to Display Names for the HTML Header
-                display_origin = get_city_name(origin_raw)
-                display_dest1 = get_city_name(dest1_raw)
-                display_dest2 = get_city_name(dest2_raw) if dest2_raw else None
-                
-            
         
+        # 5. Render Template with Processed Data
         return render_template(
             "search_results.html",
             flights=safe_flights[:limit],
-            origin=display_origin,             # Pass the full name
+            origin=display_origin,
             destination=display_dest1,
             destination_2=display_dest2,  
             depart_date=depart_date,
             depart_date_2=depart_date_2,    
             return_date=return_date,
             trip_type=trip_type,
-            currency="EUR",
+            currency="SEK",  # Set to SEK based on your terminal output
             direct_only=direct_only
         )
+
     except Exception as e:
         logger.error(f"Search error: {traceback.format_exc()}")
-        return render_template("travel_form.html", errors=[f"Search failed: {str(e)}"], form_data=request.form)
-
+        return render_template("travel_form.html", 
+                               errors=[f"Search failed: {str(e)}"], 
+                               form_data=request.form)
 
 @travel_bp.route('/flights/results', methods=['GET'])
 def flight_results():

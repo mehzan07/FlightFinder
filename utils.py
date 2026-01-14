@@ -303,23 +303,57 @@ def clean_iata(value):
 
 # A dictionary of common airport codes for quick lookup
 AIRPORT_MAPPING = {
+    # Nordic / Scandinavia
     "ARN": "Stockholm (ARN)",
+    "BMA": "Stockholm (BMA)",
+    "GOT": "Gothenburg (GOT)",
+    "CPH": "Copenhagen (CPH)",
+    "OSL": "Oslo (OSL)",
+    "HEL": "Helsinki (HEL)",
+    "KEF": "Reykjavik (KEF)",
+
+    # Europe
     "LHR": "London (LHR)",
+    "LGW": "London (LGW)",
+    "STN": "London (STN)",
     "CDG": "Paris (CDG)",
-    "JFK": "New York (JFK)",
-    "AMS": "Amsterdam (AMS)",
-    "DXB": "Dubai (DXB)",
+    "ORY": "Paris (ORY)",
     "FRA": "Frankfurt (FRA)",
+    "MUC": "Munich (MUC)",
+    "AMS": "Amsterdam (AMS)",
+    "MAD": "Madrid (MAD)",
+    "BCN": "Barcelona (BCN)",
+    "FCO": "Rome (FCO)",
+    "ZRH": "Zurich (ZRH)",
+    "VIE": "Vienna (VIE)",
     "IST": "Istanbul (IST)",
+    "ATH": "Athens (ATH)",
+    "DUB": "Dublin (DUB)",
+
+    # North America
+    "JFK": "New York (JFK)",
+    "EWR": "Newark (EWR)",
+    "LAX": "Los Angeles (LAX)",
+    "ORD": "Chicago (ORD)",
+    "SFO": "San Francisco (SFO)",
+    "MIA": "Miami (MIA)",
+    "YYZ": "Toronto (YYZ)",
+
+    # Middle East & Asia
+    "DXB": "Dubai (DXB)",
+    "DOH": "Doha (DOH)",
     "SIN": "Singapore (SIN)",
+    "HND": "Tokyo (HND)",
+    "NRT": "Tokyo (NRT)",
+    "HKG": "Hong Kong (HKG)",
+    "BKK": "Bangkok (BKK)",
     "SYD": "Sydney (SYD)",
-    # Add more as needed!
 }
 
 def get_city_name(iata_code):
     """Returns 'City (IATA)' if found, otherwise just the IATA code."""
     if not iata_code:
         return ""
-    code = iata_code.upper().strip()
+    # Normalize to uppercase and strip whitespace
+    code = str(iata_code).upper().strip()
     return AIRPORT_MAPPING.get(code, code)
-
