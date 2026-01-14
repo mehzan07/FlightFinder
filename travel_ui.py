@@ -206,6 +206,7 @@ def search_flights():
             depart_date=depart_date,
             depart_date_2=depart_date_2,    
             return_date=return_date,
+            trip_type=trip_type,
             currency="EUR",
             direct_only=direct_only
         )

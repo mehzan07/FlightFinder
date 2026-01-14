@@ -34,31 +34,31 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1>✈️ Flight Search Results</h1>
-                    <div class="route-info">
-            <span><strong>{{ origin }}</strong></span>
+                    <h1>✈️ Flight Search Results</h1>
+            <div class="route-info">
+                <span><strong>{{ origin }}</strong></span>
 
-            {% if destination_2 %}
-                <span class="arrow">→</span>
-                <span><strong>{{ destination }}</strong></span>
-                <span class="arrow">→</span>
-                <span><strong>{{ destination_2 }}</strong></span>
-            {% elif return_date %}
-                <span class="arrow">⇄</span>
-                <span><strong>{{ destination }}</strong></span>
-            {% else %}
-                <span class="arrow">→</span>
-                <span><strong>{{ destination }}</strong></span>
-            {% endif %}
-
-            <span style="margin-left: 10px; color: #999;">
-                | 📅 {{ depart_date }} 
-                {% if destination_2 %}
-                    & 📅 {{ depart_date_2 }}
-                {% elif return_date %}
-                    - 📅 {{ return_date }}
+                {% if trip_type == 'multi-city' or trip_type == 'multi_city' %}
+                    <span class="arrow">→</span>
+                    <span><strong>{{ destination }}</strong></span>
+                    <span class="arrow">→</span>
+                    <span><strong>{{ destination_2 }}</strong></span>
+                {% elif trip_type == 'round-trip' or trip_type == 'round_trip' %}
+                    <span class="arrow">⇄</span>
+                    <span><strong>{{ destination }}</strong></span>
+                {% else %}
+                    <span class="arrow">→</span>
+                    <span><strong>{{ destination }}</strong></span>
                 {% endif %}
-            </span>
+
+                <span style="margin-left: 10px; color: #999;">
+                    | 📅 {{ depart_date }} 
+                    {% if (trip_type == 'multi-city' or trip_type == 'multi_city') and depart_date_2 %}
+                        & 📅 {{ depart_date_2 }}
+                    {% elif (trip_type == 'round-trip' or trip_type == 'round_trip') and return_date %}
+                        - 📅 {{ return_date }}
+                    {% endif %}
+                </span>
         </div>
     </div>
 
