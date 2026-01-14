@@ -357,3 +357,26 @@ def get_city_name(iata_code):
     # Normalize to uppercase and strip whitespace
     code = str(iata_code).upper().strip()
     return AIRPORT_MAPPING.get(code, code)
+
+
+# utils.py
+
+AIRLINE_NAMES = {
+    "SK": "SAS",
+    "LH": "Lufthansa",
+    "DY": "Norwegian",
+    "BA": "British Airways",
+    "FR": "Ryanair",
+    "EK": "Emirates",
+    "QR": "Qatar Airways",
+    # Add more here as you find them!
+}
+
+def get_airline_name(code):
+    """Translates IATA code to readable name, or returns code if unknown"""
+    if not code:
+        return "Multiple"
+    
+    clean_code = str(code).strip().upper()
+    # .get() looks for the code. If not found, it returns the original clean_code
+    return AIRLINE_NAMES.get(clean_code, clean_code)

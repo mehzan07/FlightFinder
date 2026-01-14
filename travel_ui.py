@@ -16,7 +16,7 @@ limit = config.FEATURED_FLIGHT_LIMIT
 import json
 import traceback
 import os
-from utils import get_city_name
+from utils import get_city_name, get_airline_name
 
 # Database imports commented out as requested
 # from database import db
@@ -141,7 +141,6 @@ def travel_ui():
 
 
 
-
 @travel_bp.route("/search-flights", methods=["POST"])
 def search_flights():
     """Handler for the flight search form submission"""
@@ -159,7 +158,6 @@ def search_flights():
     passengers = request.form.get("passengers", "1")
     cabin_class = request.form.get("cabin_class", "economy")
     
-    # Use config for default limit if not provided in form
     limit = int(request.form.get("limit", config.FEATURED_FLIGHT_LIMIT))
     direct_only = request.form.get("direct_only") == "on"
 
@@ -168,7 +166,6 @@ def search_flights():
     display_dest1 = get_city_name(dest1_raw)
     display_dest2 = get_city_name(dest2_raw) if dest2_raw else None
 
-    # Basic Validation
     if not origin_raw or not dest1_raw or not depart_date:
         return render_template("travel_form.html", 
                                errors=["Please provide origin, destination, and departure date"],
@@ -192,30 +189,34 @@ def search_flights():
                 flight["trip_type"] = trip_type
                 flight["passengers"] = passengers
                 
-                # B. CLEAN AIRLINE CODE: Ensure it is exactly 2 letters
-                raw_val = flight.get("airline_code") or flight.get("airline") or "XX"
-                clean_code = str(raw_val).strip().upper()[:2]
+                # B. CAPTURE AND CLEAN AIRLINE CODE
+                # We check multiple possible keys from different APIs
+                raw_code = (
+                    flight.get("airline_code") or 
+                    flight.get("airline") or 
+                    flight.get("carrierCode") or 
+                    "XX"
+                )
+                clean_code = str(raw_code).strip().upper()[:2]
                 flight["airline_code"] = clean_code
 
-                # C. DYNAMIC LOGO URL: Sets CDN based on config (Local vs PA)
-                flight["logo_url"] = f"{config.LOGO_CDN}{clean_code}.png"
+                # C. DEFINE AIRLINE DISPLAY (The translation step)
+                # This adds the 'airline_display' key to the flight dictionary
+                flight["airline_display"] = get_airline_name(clean_code)
 
                 # D. Handle Multi-City specific data
-                if trip_type == "multi-city":
+                if trip_type in ['multi-city', 'multi_city']:
                     flight["origin_2"] = request.form.get("origin_code_2")
                     flight["destination_2"] = request.form.get("destination_code_2")
                     flight["depart_date_2"] = request.form.get("date_from_2")
 
                 # E. REBUILD AND CLEAN DEEPLINK (Fixes the 404 error)
                 raw_link = build_flight_deeplink(flight, config.AFFILIATE_MARKER)
-                
-                # Use urlparse to strip any domain (like 0.0.0.0) and keep only path/query
                 parsed = urlparse(raw_link)
-                clean_link = parsed.path  # Result: "/search/ARN123..."
+                clean_link = parsed.path
                 if parsed.query:
-                    clean_link += f"?{parsed.query}" # Result: "/search/ARN123...?currency=SEK"
+                    clean_link += f"?{parsed.query}"
                 
-                # Ensure it's a relative path
                 if not clean_link.startswith("/"):
                     clean_link = "/" + clean_link
 
@@ -233,7 +234,7 @@ def search_flights():
             depart_date_2=depart_date_2,    
             return_date=return_date,
             trip_type=trip_type,
-            currency="SEK",  # Set to SEK based on your terminal output
+            currency="SEK",  # Hardcoded for your requirement
             direct_only=direct_only
         )
 
