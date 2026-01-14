@@ -4,6 +4,7 @@ import logging
 from datetime import datetime
 from typing import Dict, Any
 
+
 import dateparser
 from word2number import w2n
 import spacy
@@ -299,3 +300,26 @@ def clean_iata(value):
     """Extracts 'ARN' from 'Stockholm (ARN)' or 'ARN'"""
     match = re.search(r'\((\w{3})\)', value)
     return match.group(1).upper() if match else value.strip().upper()[:3]
+
+# A dictionary of common airport codes for quick lookup
+AIRPORT_MAPPING = {
+    "ARN": "Stockholm (ARN)",
+    "LHR": "London (LHR)",
+    "CDG": "Paris (CDG)",
+    "JFK": "New York (JFK)",
+    "AMS": "Amsterdam (AMS)",
+    "DXB": "Dubai (DXB)",
+    "FRA": "Frankfurt (FRA)",
+    "IST": "Istanbul (IST)",
+    "SIN": "Singapore (SIN)",
+    "SYD": "Sydney (SYD)",
+    # Add more as needed!
+}
+
+def get_city_name(iata_code):
+    """Returns 'City (IATA)' if found, otherwise just the IATA code."""
+    if not iata_code:
+        return ""
+    code = iata_code.upper().strip()
+    return AIRPORT_MAPPING.get(code, code)
+

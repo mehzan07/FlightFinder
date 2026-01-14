@@ -6,6 +6,7 @@ from config import DEBUG_MODE, FEATURED_FLIGHT_LIMIT,IS_LOCAL
 import json
 import traceback
 import os
+from utils import get_city_name
 
 # Database imports commented out as requested
 # from database import db
@@ -196,13 +197,20 @@ def search_flights():
 
                 flight["deeplink"] = new_link
                 safe_flights.append(flight)
+                
+                
+                # Before the return render_template call:
+                display_origin = get_city_name(origin)
+                display_destination = get_city_name(destination)
+                display_destination_2 = get_city_name(destination_2) if destination_2 else None
+
         
         return render_template(
             "search_results.html",
             flights=safe_flights[:limit],
-            origin=origin,
-            destination=destination,
-            destination_2=destination_2,    
+            origin=display_origin,             # Pass the full name
+            destination=display_destination,
+            destination_2=display_destination_2,  
             depart_date=depart_date,
             depart_date_2=depart_date_2,    
             return_date=return_date,
