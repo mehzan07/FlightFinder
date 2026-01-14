@@ -198,19 +198,24 @@ def search_flights():
                 flight["deeplink"] = new_link
                 safe_flights.append(flight)
                 
+                # 1. Keep raw codes for the API and Link Builder
+                origin_raw = extract_iata(request.form.get("origin_code", ""))
+                dest1_raw = extract_iata(request.form.get("destination_code", ""))
+                dest2_raw = extract_iata(request.form.get("destination_code_2", ""))
                 
-                # Before the return render_template call:
-                display_origin = get_city_name(origin)
-                display_destination = get_city_name(destination)
-                display_destination_2 = get_city_name(destination_2) if destination_2 else None
-
+                # 2. Convert to Display Names for the HTML Header
+                display_origin = get_city_name(origin_raw)
+                display_dest1 = get_city_name(dest1_raw)
+                display_dest2 = get_city_name(dest2_raw) if dest2_raw else None
+                
+            
         
         return render_template(
             "search_results.html",
             flights=safe_flights[:limit],
             origin=display_origin,             # Pass the full name
-            destination=display_destination,
-            destination_2=display_destination_2,  
+            destination=display_dest1,
+            destination_2=display_dest2,  
             depart_date=depart_date,
             depart_date_2=depart_date_2,    
             return_date=return_date,
