@@ -138,16 +138,24 @@
                                 <div class="segment-time">{{ flight.arrival_time_2 or '--:--' }}</div>
                                 <div class="segment-airport">{{ flight.destination_2_name or flight.destination_2 }}</div>
                             </div>
-                        </div>
+                </div>
                     {% endif %}
 
                     <div style="text-align: right; margin-top: 25px; border-top: 1px solid #f0f0f0; padding-top: 20px;">
-                        <a href="{{ flight.deeplink or flight.link }}" target="_blank" class="book-btn">
-                            Book This Journey →
-                        </a>
+                            <a href="{{ url_for('travel.book_flight', 
+                        url=flight.deeplink or flight.link, 
+                        dest=flight.destination_city or destination_name, 
+                        airline=flight.airline_name or 'Our Partner') }}"
+                        class="book-btn">
+                        {% if flight.stops == 0 or flight.number_of_changes == 0 %}
+                        Book This Direct Flight →
+                        {% else %}
+                        Book This Flight →
+                        {% endif %}
+                            </a>
                     </div>
-                </div>
-            {% endfor %}
+    </div>
+        {% endfor %}
         {% else %}
             <div class="no-results">
                 <h2>😕 No flights found</h2>
