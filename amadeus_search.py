@@ -12,6 +12,8 @@ import re
 from utils import parse_iso_duration, format_duration 
 from typing import Dict, Optional
 import traceback
+import json
+import os
 
 
 from config import get_logger
@@ -36,10 +38,19 @@ if not AMADEUS_API_KEY or not AMADEUS_API_SECRET:
 _access_token = None
 _token_expiry = None
 
+TOKEN_FILE = "/home/mehzan07/amadeus_token.json"
 
 def get_access_token():
     """Get OAuth access token from Amadeus"""
     global _access_token, _token_expiry
+    
+    # 1. Try to load token from a file instead of memory
+    if os.path.exists(TOKEN_FILE):
+        with open(TOKEN_FILE, 'r') as f:
+            cache = json.load(f)
+            expiry = datetime.fromisoformat(cache['expiry'])
+            if datetime.now() < expiry:
+                return cache['token']
     
     # Check if we have a valid cached token
     if _access_token and _token_expiry and datetime.now() < _token_expiry:
@@ -141,7 +152,7 @@ def search_flights_amadeus(
     # -------------------------------------------------------------
     try:
         # --- API CALL ---
-        response = requests.get(endpoint, params=params, headers=headers, timeout=15)
+        response = requests.get(endpoint, params=params, headers=headers, timeout=10)
         
         # --- HTTP ERROR CHECK ---
         if response.status_code != 200:
