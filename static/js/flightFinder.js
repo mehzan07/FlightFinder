@@ -1,186 +1,105 @@
 /**
- * Helper to build a direct search link (mainly for console logging)
+ * Flightfinder.js - Main logic for Airport Autocomplete and Form UI
  */
-function buildAviasalesSearchLink(
-  origin,
-  destination,
-  dateFrom,
-  dateTo = null,
-) {
-  const [yearFrom, monthFrom, dayFrom] = dateFrom.split("-");
-  let searchPath = `${origin}${dayFrom}${monthFrom}${destination}`;
 
-  if (dateTo) {
-    const [yearTo, monthTo, dayTo] = dateTo.split("-");
-    searchPath += `${dayTo}${monthTo}`;
-  }
+// --- 1. THE AUTOCOMPLETE ENGINE ---
+function setupAirportAutocomplete(inputId, hiddenId) {
+  const $input = $("#" + inputId);
+  const $hidden = $("#" + hiddenId);
+  const $list = $("#" + inputId + "-list");
 
-  return `https://www.aviasales.com/search/${searchPath}`;
-}
+  $input.on("input", function () {
+    const query = $(this).val().trim();
 
-$(document).ready(function () {
-  console.log("flightFinder.js loaded");
-
-  // --- 1. UI ELEMENT SELECTORS ---
-  const $tripType = $("#trip_type");
-  const $returnDateGroup = $("#returnDateGroup");
-  const $returnDateInput = $("#date_to");
-  const $multiCityGroup = $("#multiCityGroup");
-  const $dest2Input = $("#destination_code_2");
-  const $date2Input = $("#date_from_2");
-  const $dateFrom = $("#date_from");
-
-  // --- 2. TRIP TYPE TOGGLE LOGIC ---
-  function toggleTripFields() {
-    const selected = $tripType.val();
-
-    // Reset visibility and requirements
-    $returnDateGroup.hide();
-    $multiCityGroup.hide();
-    $returnDateInput.prop("required", false);
-    $dest2Input.prop("required", false);
-    $date2Input.prop("required", false);
-
-    if (selected === "round-trip") {
-      $returnDateGroup.show();
-      $returnDateInput.prop("required", true);
-    } else if (selected === "multi-city") {
-      $multiCityGroup.show();
-      $dest2Input.prop("required", true);
-      $date2Input.prop("required", true);
-
-      // Set defaults if empty
-      if ($dest2Input.val() === "") $dest2Input.val("Paris (CDG)");
-      if ($date2Input.val() === "") $date2Input.val("2026-03-15");
+    if (query.length < 2) {
+      $list.empty().hide();
+      return;
     }
-  }
 
-  // Initialize and Listen for changes
-  toggleTripFields();
-  $tripType.on("change", toggleTripFields);
+    const url = `https://autocomplete.travelpayouts.com/places2?term=${query}&locale=en&types[]=city&types[]=airport`;
 
-  // --- 3. CLEAR FORM LOGIC ---
-  $("#clearFormBtn").on("click", function () {
-    // Manually empty the text inputs
-    $("#origin_code, #destination_code, #destination_code_2").val("");
-
-    // Manually empty the date inputs
-    $("#date_from, #date_to, #date_from_2").val("");
-
-    // Reset passengers to 1
-    $("#passengers").val(1);
-
-    // Force the dropdown back to 'one-way'
-    $tripType.val("one-way").trigger("change");
-
-    console.log("Form completely emptied and reset to One-way.");
-  });
-
-  // Close button for Multi-city Leg 2
-  $("#removeLeg2").on("click", function () {
-    $tripType.val("one-way").trigger("change");
-  });
-
-  // --- 4. AIRPORT AUTOCOMPLETE SETUP ---
-  function setupAirportAutocomplete(inputId) {
-    $("#" + inputId).on("input", function () {
-      const query = $(this).val().trim().toLowerCase();
-      if (query.length < 1) {
-        $("#" + inputId + "-list").html("");
-        return;
-      }
-      $.getJSON("/autocomplete-airports", { query: query })
-        .done(function (data) {
-          let options = "";
-          data.forEach((item) => {
-            options += `<option value="${item.value}">${item.label}</option>`;
-          });
-          $("#" + inputId + "-list").html(options);
-        })
-        .fail(function (xhr, status, error) {
-          console.error("Autocomplete failed:", status, error);
+    $.getJSON(url, function (data) {
+      let html = "";
+      if (data && data.length > 0) {
+        data.forEach((item) => {
+          // Display: "Stockholm, Sweden (ARN)"
+          const name = `${item.name}, ${item.country_name} (${item.code})`;
+          html += `<div class="suggestion-item" data-code="${item.code}" data-full-name="${name}">${name}</div>`;
         });
-    });
-  }
-
-  setupAirportAutocomplete("origin_code");
-  setupAirportAutocomplete("destination_code");
-  setupAirportAutocomplete("destination_code_2");
-
-  // --- 5. DATE RESTRICTION LOGIC ---
-  if ($dateFrom.length) {
-    const today = new Date().toISOString().split("T")[0];
-    $dateFrom.attr("min", today);
-
-    $dateFrom.on("change", function () {
-      const selectedDate = $(this).val();
-      // Update Return Date min
-      if ($returnDateInput.length) $returnDateInput.attr("min", selectedDate);
-      // Update Leg 2 Date min
-      if ($date2Input.length) {
-        $date2Input.attr("min", selectedDate);
-        if ($date2Input.val() < selectedDate) $date2Input.val(selectedDate);
+        $list.html(html).show();
+      } else {
+        $list.empty().hide();
       }
     });
-  }
-
-  // --- 6. FORM SUBMISSION HANDLER ---
-  const form = document.getElementById("searchForm");
-  const loading = document.getElementById("loading");
-
-  const extractIATA = (value) => {
-    const matchParentheses = value.match(/\((\w{3})\)$/);
-    if (matchParentheses) return matchParentheses[1];
-
-    const trimmedValue = value.trim().toUpperCase();
-    if (trimmedValue.length === 3 && /^[A-Z]{3}$/.test(trimmedValue))
-      return trimmedValue;
-
-    return trimmedValue;
-  };
-
-  if (form) {
-    form.addEventListener("submit", (e) => {
-      // We don't preventDefault here because we want the form to submit to Flask,
-      // but we use it to show the loading spinner.
-      if (loading) {
-        loading.style.display = "block";
-      }
-
-      // Log details for debugging
-      const origin = extractIATA(document.getElementById("origin_code").value);
-      const destination = extractIATA(
-        document.getElementById("destination_code").value,
-      );
-      console.log("Submitting search for:", origin, "to", destination);
-    });
-  }
-});
-
-/**
- * Renders local results (if available)
- */
-function renderFlightResults(data) {
-  const container = document.getElementById("results");
-  if (!container) return;
-
-  container.innerHTML = "<p>✅ Rendering started</p>";
-
-  if (!data || !data.data || data.data.length === 0) {
-    container.innerHTML += "<p>😕 No flights found.</p>";
-    return;
-  }
-
-  data.data.forEach((flight) => {
-    const card = document.createElement("div");
-    card.className = "flight-card p-3 mb-3 border rounded";
-    card.innerHTML = `
-            <h5>Destination: ${flight.destination || "Unknown"}</h5>
-            <p>🛫 Depart: ${flight.depart_date || "N/A"}</p>
-            <p>⏱ Duration: ${flight.duration || "?"} mins</p>
-            <p>📏 Distance: ${flight.distance || "?"} km</p>
-            <p>✅ Actual: ${flight.actual ? "Yes" : "No"}</p>
-        `;
-    container.appendChild(card);
   });
+
+  // Handle selecting an item from the list
+  $(document).on(
+    "click",
+    "#" + inputId + "-list .suggestion-item",
+    function (e) {
+      const code = $(this).data("code");
+      const fullName = $(this).data("full-name");
+
+      $input.val(fullName); // What user sees
+      $hidden.val(code); // What Python sees
+      $list.empty().hide();
+    },
+  );
 }
+
+// --- 2. INITIALIZATION & UI HANDLERS ---
+$(document).ready(function () {
+  // Initialize Autocomplete for all 3 fields
+  setupAirportAutocomplete("origin_text", "origin_code");
+  setupAirportAutocomplete("destination_text", "destination_code");
+  setupAirportAutocomplete("destination_text_2", "destination_code_2");
+
+  // Close any open autocomplete lists if user clicks anywhere else
+  $(document).on("click", function (event) {
+    if (!$(event.target).closest(".position-relative").length) {
+      $(".autocomplete-suggestions").hide();
+    }
+  });
+
+  // --- TRIP TYPE LOGIC ---
+  $("#trip_type").on("change", function () {
+    const selectedType = $(this).val();
+
+    if (selectedType === "multi-city") {
+      $("#multiCityGroup").slideDown();
+      $("#returnDateGroup").slideUp();
+    } else if (selectedType === "one-way") {
+      $("#multiCityGroup").slideUp();
+      $("#returnDateGroup").slideUp();
+    } else {
+      // Round-trip
+      $("#multiCityGroup").slideUp();
+      $("#returnDateGroup").slideDown();
+    }
+  });
+
+  // --- FORM BUTTONS ---
+
+  // Clear Form Logic
+  $("#clearFormBtn").on("click", function () {
+    $("#searchForm")[0].reset();
+    $('input[type="hidden"]').val(""); // Clear hidden codes too
+    $(".autocomplete-suggestions").hide();
+  });
+
+  // Leg 2 Close Button
+  $("#removeLeg2").on("click", function () {
+    $("#trip_type").val("round-trip").trigger("change");
+  });
+
+  // --- SEARCH LOADING STATE ---
+  $("#searchForm").on("submit", function () {
+    // Show the spinner, hide the button to prevent double clicks
+    $("#loading").show();
+    $(this)
+      .find('button[type="submit"]')
+      .attr("disabled", "disabled")
+      .text("Searching...");
+  });
+});

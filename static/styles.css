@@ -1,3 +1,4 @@
+/* --- Existing Styles --- */
 .view-offer-link {
   font-size: 1.4em;
   font-weight: bold;
@@ -37,4 +38,55 @@
   display: block;
   padding: 1rem;
   border: 2px dashed #ccc;
+}
+
+/* --- ✈️ NEW: Flightfinder Autocomplete Styles --- */
+
+/* This makes sure the suggestions list floats correctly over the form */
+.position-relative {
+  position: relative;
+}
+
+.autocomplete-suggestions {
+  position: absolute;
+  top: 100%; /* Places it exactly below the input box */
+  left: 0;
+  right: 0;
+  background: white;
+  border: 1px solid #ced4da;
+  border-top: none;
+  z-index: 2000; /* Ensures it stays on top of buttons and other inputs */
+  max-height: 250px;
+  overflow-y: auto;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  border-radius: 0 0 5px 5px;
+  display: none; /* Hidden by default until user types */
+}
+
+.suggestion-item {
+  padding: 12px 15px;
+  cursor: pointer;
+  border-bottom: 1px solid #f1f1f1;
+  font-size: 0.95rem;
+  color: #333;
+  text-align: left;
+}
+
+.suggestion-item:last-child {
+  border-bottom: none;
+}
+
+.suggestion-item:hover {
+  background-color: #e9ecef;
+  color: #007bff;
+}
+
+/* Scrollbar styling for the dropdown */
+.autocomplete-suggestions::-webkit-scrollbar {
+  width: 6px;
+}
+
+.autocomplete-suggestions::-webkit-scrollbar-thumb {
+  background-color: #ccc;
+  border-radius: 10px;
 }
