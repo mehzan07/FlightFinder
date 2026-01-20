@@ -48,8 +48,21 @@ function setupAirportAutocomplete(inputId, hiddenId) {
   );
 }
 
+// This triggers every time the page is shown, including via the "Back" button
+window.onpageshow = function(event) {
+    if (event.persisted || (window.performance && window.performance.navigation.type === 2)) {
+        // Force the loading spinner to hide and button to re-enable
+        $('#loading').hide();
+        $('button[type="submit"]').prop('disabled', false).text('Search Flights');
+    }
+};
+
+
 // --- 2. INITIALIZATION & UI HANDLERS ---
 $(document).ready(function () {
+  // 1. FORCE RESET: Hide loading and enable button every time the page loads
+    $('#loading').hide();
+    $('button[type="submit"]').prop('disabled', false).text('Search Flights');
   // Initialize Autocomplete for all 3 fields
   setupAirportAutocomplete("origin_text", "origin_code");
   setupAirportAutocomplete("destination_text", "destination_code");
