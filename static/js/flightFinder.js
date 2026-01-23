@@ -1,5 +1,6 @@
 /**
- * Flightfinder.js - Main logic for Airport Autocomplete and Form UI
+ * Flightfinder.js - Final Corrected Version
+ * Handles Autocomplete, UI Toggles, and API Safety logic
  */
 
 // --- 1. THE AUTOCOMPLETE ENGINE ---
@@ -22,7 +23,6 @@ function setupAirportAutocomplete(inputId, hiddenId) {
       let html = "";
       if (data && data.length > 0) {
         data.forEach((item) => {
-          // Display: "Stockholm, Sweden (ARN)"
           const name = `${item.name}, ${item.country_name} (${item.code})`;
           html += `<div class="suggestion-item" data-code="${item.code}" data-full-name="${name}">${name}</div>`;
         });
@@ -41,44 +41,45 @@ function setupAirportAutocomplete(inputId, hiddenId) {
       const code = $(this).data("code");
       const fullName = $(this).data("full-name");
 
-      $input.val(fullName); // What user sees
-      $hidden.val(code); // What Python sees
+      $input.val(fullName); // What the user sees
+      $hidden.val(code); // What the Python backend needs (3-letter code)
       $list.empty().hide();
     },
   );
 }
 
-// This triggers every time the page is shown, including via the "Back" button
-window.onpageshow = function(event) {
-    if (event.persisted || (window.performance && window.performance.navigation.type === 2)) {
-        // Force the loading spinner to hide and button to re-enable
-        $('#loading').hide();
-        $('button[type="submit"]').prop('disabled', false).text('Search Flights');
-    }
+// Reset UI state when navigating back to the page
+window.onpageshow = function (event) {
+  if (
+    event.persisted ||
+    (window.performance && window.performance.navigation.type === 2)
+  ) {
+    $("#loading").hide();
+    $('button[type="submit"]').prop("disabled", false).text("Search Flights");
+  }
 };
-
 
 // --- 2. INITIALIZATION & UI HANDLERS ---
 $(document).ready(function () {
-  // 1. FORCE RESET: Hide loading and enable button every time the page loads
-    $('#loading').hide();
-    $('button[type="submit"]').prop('disabled', false).text('Search Flights');
-  // Initialize Autocomplete for all 3 fields
+  // Reset UI State on Load
+  $("#loading").hide();
+  $('button[type="submit"]').prop("disabled", false).text("Search Flights");
+
+  // Initialize Autocomplete for all fields
   setupAirportAutocomplete("origin_text", "origin_code");
   setupAirportAutocomplete("destination_text", "destination_code");
   setupAirportAutocomplete("destination_text_2", "destination_code_2");
 
-  // Close any open autocomplete lists if user clicks anywhere else
+  // Close suggestions when clicking outside
   $(document).on("click", function (event) {
     if (!$(event.target).closest(".position-relative").length) {
       $(".autocomplete-suggestions").hide();
     }
   });
 
-  // --- TRIP TYPE LOGIC ---
+  // Trip Type Toggle Logic (Show/Hide Return Date or Leg 2)
   $("#trip_type").on("change", function () {
     const selectedType = $(this).val();
-
     if (selectedType === "multi-city") {
       $("#multiCityGroup").slideDown();
       $("#returnDateGroup").slideUp();
@@ -92,27 +93,54 @@ $(document).ready(function () {
     }
   });
 
-  // --- FORM BUTTONS ---
-
   // Clear Form Logic
   $("#clearFormBtn").on("click", function () {
     $("#searchForm")[0].reset();
-    $('input[type="hidden"]').val(""); // Clear hidden codes too
+    $('input[type="hidden"]').val("");
     $(".autocomplete-suggestions").hide();
   });
 
-  // Leg 2 Close Button
+  // Close Leg 2 Button (Resets to Round-trip)
   $("#removeLeg2").on("click", function () {
     $("#trip_type").val("round-trip").trigger("change");
   });
 
-  // --- SEARCH LOADING STATE ---
-  $("#searchForm").on("submit", function () {
-    // Show the spinner, hide the button to prevent double clicks
+  // --- 3. THE CONSOLIDATED SUBMIT HANDLER (THE FIX) ---
+  $("#searchForm").on("submit", function (e) {
+    // A. CODE SAFETY: Extract (ARN) codes if hidden field is empty
+    ["origin", "destination", "destination_2"].forEach(function (prefix) {
+      const textVal = $("#" + prefix + "_text").val();
+      const $hidden = $("#" + prefix + "_code");
+      if (textVal && !$hidden.val() && textVal.includes("(")) {
+        const extracted = textVal.match(/\(([^)]+)\)/);
+        if (extracted) $hidden.val(extracted[1]);
+      }
+    });
+
+    // B. AMADEUS 400 FIX: Disable '0' values for children/infants
+    // This prevents them from being sent to Python/Amadeus and causing a 400 error.
+    const childrenInput = $("#children");
+    const infantsInput = $("#infants");
+
+    if (childrenInput.val() === "0" || !childrenInput.val()) {
+      childrenInput.attr("disabled", true);
+    }
+    if (infantsInput.val() === "0" || !infantsInput.val()) {
+      infantsInput.attr("disabled", true);
+    }
+
+    // C. TRIP TYPE CLEANUP: Don't send return date if it's not a round-trip
+    if ($("#trip_type").val() !== "round-trip") {
+      $("#date_to").attr("disabled", true);
+    }
+
+    // D. SHOW LOADING STATE
     $("#loading").show();
     $(this)
       .find('button[type="submit"]')
-      .attr("disabled", "disabled")
+      .prop("disabled", true)
       .text("Searching...");
+
+    return true; // Allow the form to submit to the Python backend
   });
 });

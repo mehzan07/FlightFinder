@@ -16,11 +16,12 @@
   </div>
   {% endif %}
 
-  <form id="searchForm" method="POST" action="/search-flights" class="card p-4 shadow-sm" autocomplete="off">
+  <!-- <form id="searchForm" method="POST" action="/search-flights" class="card p-4 shadow-sm" autocomplete="off"> -->
+    <form id="searchForm" method="POST" action="{{ url_for('travel.search_flights') }}" class="card p-4 shadow-sm" autocomplete="off">
 
     <div class="mb-3 position-relative">
       <label for="origin_text" class="form-label">From</label>
-      <input type="text" class="form-control" id="origin_text" 
+      <input type="text" class="form-control" id="origin_text" name="origin_text"
              placeholder="Enter city or airport" autocomplete="off"
              value="{% if form_data %}{{ form_data.origin_text }}{% else %}Stockholm Arlanda (ARN){% endif %}">
       
@@ -32,7 +33,7 @@
 
     <div class="mb-3 position-relative">
       <label for="destination_text" class="form-label">To</label>
-      <input type="text" class="form-control" id="destination_text" 
+      <input type="text" class="form-control" id="destination_text" name="destination_text"
              placeholder="Enter city or airport" autocomplete="off"
              value="{% if form_data %}{{ form_data.destination_text }}{% else %}London Heathrow (LHR){% endif %}">
       
@@ -80,22 +81,22 @@
       </div>
 
       <div class="mb-3 position-relative">
-    <label for="destination_text_2" class="form-label">To (Second Destination)</label>
-    <input type="text" class="form-control" id="destination_text_2" 
-           placeholder="Where next?" autocomplete="off"
-           value="{% if form_data and form_data.destination_text_2 %}{{ form_data.destination_text_2 }}{% else %}Paris Charles de Gaulle (CDG){% endif %}">
-    
-    <input type="hidden" id="destination_code_2" name="destination_code_2" 
-           value="{% if form_data and form_data.destination_code_2 %}{{ form_data.destination_code_2 }}{% else %}CDG{% endif %}">
-    
-    <div id="destination_text_2-list" class="autocomplete-suggestions"></div>
-</div>
+          <label for="destination_text_2" class="form-label">To (Second Destination)</label>
+          <input type="text" class="form-control" id="destination_text_2" name="destination_text_2"
+                 placeholder="Where next?" autocomplete="off"
+                 value="{% if form_data and form_data.destination_text_2 %}{{ form_data.destination_text_2 }}{% else %}Paris Charles de Gaulle (CDG){% endif %}">
+          
+          <input type="hidden" id="destination_code_2" name="destination_code_2" 
+                 value="{% if form_data and form_data.destination_code_2 %}{{ form_data.destination_code_2 }}{% else %}CDG{% endif %}">
+          
+          <div id="destination_text_2-list" class="autocomplete-suggestions"></div>
+      </div>
 
-<div class="mb-3">
-    <label class="form-label" for="date_from_2">📅 Date for Leg 2</label>
-    <input type="date" id="date_from_2" name="date_from_2" class="form-control"
-           value="{% if form_data and form_data.date_from_2 %}{{ form_data.date_from_2 }}{% else %}2026-03-23{% endif %}">
-</div>
+      <div class="mb-3">
+          <label class="form-label" for="date_from_2">📅 Date for Leg 2</label>
+          <input type="date" id="date_from_2" name="date_from_2" class="form-control"
+                 value="{% if form_data and form_data.date_from_2 %}{{ form_data.date_from_2 }}{% else %}2026-03-23{% endif %}">
+      </div>
     </div>
 
     <div class="row mt-3">
