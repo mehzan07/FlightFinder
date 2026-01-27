@@ -97,8 +97,12 @@ def travel_ui():
         if not origin_code: errors.append("Origin airport is required.")
         if not destination_code: errors.append("Destination airport is required.")
         if not date_from_raw: errors.append("Departure date is required.")
-        if trip_type != "one-way" and not date_to_raw:
-            errors.append("Return date is required for round-trip.")
+        if trip_type == "one-way":
+        # One-Way URL: No return date allowed
+            aviasales_url = f"https://www.aviasales.com/search/{origin}{date_from_formatted}{destination}1"
+        else:
+            # Round-Trip URL: Must include return date
+            aviasales_url = f"https://www.aviasales.com/search/{origin}{date_from_formatted}{destination}{date_to_formatted}1"
 
         if errors:
             return render_template("travel_form.html", errors=errors, form_data=form_data)
