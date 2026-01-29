@@ -14,6 +14,9 @@ def get_env_boolean(var_name, default=False):
     val = os.getenv(var_name, str(default)).lower()
     return val in ('true', '1', 't', 'yes')
 
+PA_USER = get_env_var("PYTHONANYWHERE_USER", "username")
+
+
 # === Environment Detection ===
 # If IS_LOCAL is false, we assume we are on PythonAnywhere
 IS_LOCAL = get_env_boolean("IS_LOCAL", default=False)
@@ -29,7 +32,7 @@ USER_IP = get_env_var("USER_IP", "127.0.0.1")
 
 # === Server & URL Settings ===
 # This dynamically sets your domain so links don't break
-PA_USER = get_env_var("PYTHONANYWHERE_USER", "username")
+#PA_USER = get_env_var("PYTHONANYWHERE_USER", "username")
 if IS_LOCAL:
     BASE_URL = "http://127.0.0.1:5000"
     # Local-friendly CDN (Skyscanner)

@@ -382,6 +382,26 @@ def home_page():
 def flightfinder():
     return redirect(url_for("travel.travel_ui"))
 
+
+
+@travel_bp.route('/search-airports')
+def search_airports():
+    logger.info("search_airports route hit")
+    query = request.args.get('term', '')
+    if len(query) < 2:
+        return jsonify([])
+    
+    # Your server makes the request (No CORS issues here)
+    url = f"https://autocomplete.travelpayouts.com/places2?term={query}&locale=en&types[]=city&types[]=airport"
+    try:
+        response = requests.get(url, timeout=5)
+        return jsonify(response.json())
+    except Exception as e:
+        print(f"Autocomplete Error: {e}")
+        return jsonify([])
+    
+    
+
 @travel_bp.route("/health", methods=["GET"])
 def health():
     return jsonify({'status': 'ok', 'timestamp': datetime.utcnow().isoformat(), 'service': 'FlightFinder'})

@@ -11,13 +11,11 @@ function setupAirportAutocomplete(inputId, hiddenId) {
 
   $input.on("input", function () {
     const query = $(this).val().trim();
-
     if (query.length < 2) {
       $list.empty().hide();
       return;
     }
-
-    const url = `https://autocomplete.travelpayouts.com/places2?term=${query}&locale=en&types[]=city&types[]=airport`;
+    const url = `/search-airports?term=${query}`;
 
     $.getJSON(url, function (data) {
       let html = "";
