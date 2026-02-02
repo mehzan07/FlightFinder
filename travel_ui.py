@@ -383,24 +383,54 @@ def flightfinder():
     return redirect(url_for("travel.travel_ui"))
 
 
+import os
+import json
+import requests
+from flask import jsonify, request
 
+
+# using both local and pythonanywhere by looking to the IS_LOCAL variable.
 @travel_bp.route('/search-airports')
 def search_airports():
-    logger.info("search_airports route hit")
-    query = request.args.get('term', '')
+    query = request.args.get('term', '').lower()
     if len(query) < 2:
         return jsonify([])
-    
-    # Your server makes the request (No CORS issues here)
-    url = f"https://autocomplete.travelpayouts.com/places2?term={query}&locale=en&types[]=city&types[]=airport"
+
+    # Auto-detect if we are on PythonAnywhere
+    IS_LOCAL = 'pythonanywhere' not in os.environ.get('HOME', '')
+
+    if IS_LOCAL:
+        url = f"https://autocomplete.travelpayouts.com/places2?term={query}&locale=en&types[]=city&types[]=airport"
+        try:
+            response = requests.get(url, timeout=5)
+            # The API already uses 'country_name' and 'code', so we return as-is
+            return jsonify(response.json())
+        except Exception as e:
+            print(f"API Error: {e}")
+
+    # --- Fallback/Production: Local File ---
+    file_path = os.path.join(os.path.dirname(__file__), 'airports.json')
     try:
-        response = requests.get(url, timeout=5)
-        return jsonify(response.json())
+        with open(file_path, 'r', encoding='utf-8') as f:
+            data = json.load(f)
+        
+        results = []
+        for item in data:
+            if (query in item.get('city', '').lower() or 
+                query in item.get('name', '').lower() or 
+                query in item.get('iata', '').lower()):
+                
+                # ✅ KEY FIX: We map 'city' to 'country_name' and 'iata' to 'code'
+                # so your JavaScript template `${item.country_name}` doesn't break.
+                results.append({
+                    "name": item.get('name'),
+                    "country_name": item.get('city'), # Map city to country_name
+                    "code": item.get('iata')          # Map iata to code
+                })
+        return jsonify(results[:10])
     except Exception as e:
-        print(f"Autocomplete Error: {e}")
         return jsonify([])
-    
-    
+
 
 @travel_bp.route("/health", methods=["GET"])
 def health():

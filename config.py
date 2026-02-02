@@ -32,7 +32,6 @@ USER_IP = get_env_var("USER_IP", "127.0.0.1")
 
 # === Server & URL Settings ===
 # This dynamically sets your domain so links don't break
-#PA_USER = get_env_var("PYTHONANYWHERE_USER", "username")
 if IS_LOCAL:
     BASE_URL = "http://127.0.0.1:5000"
     # Local-friendly CDN (Skyscanner)
