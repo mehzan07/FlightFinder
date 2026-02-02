@@ -1,4 +1,4 @@
-/* --- Existing Styles --- */
+/* --- UI Components --- */
 .view-offer-link {
   font-size: 1.4em;
   font-weight: bold;
@@ -10,18 +10,38 @@
   text-decoration: underline;
 }
 
-/* ✅ TEMPORARILY HIDE CHATBOT ICON FOR DEMO */
+/* ✅ HARD HIDE NAVIGATION & CHATBOT */
+/* Target by URL patterns and common IDs to ensure they disappear */
 .chatbot-icon,
-#chatbot-launcher {
+#chatbot-launcher,
+a[href*="history"],
+a[href*="account"],
+a[href*="profile"],
+a[href*="bookings"] {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+  width: 0 !important;
+  height: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+/* Hide the parent container (the <li> or <div>) so there's no empty gap */
+.nav-item:has(a[href*="history"]),
+.nav-item:has(a[href*="account"]),
+.nav-item:has(a[href*="profile"]),
+li:has(a[href*="history"]),
+li:has(a[href*="account"]) {
   display: none !important;
 }
 
-/* 🧭 Hide return date field for one-way trips */
+/* 🧭 Flight Search UI Toggles */
 #returnDateGroup.hidden {
   display: none !important;
 }
 
-/* ✨ Optional: Smooth transition for toggling visibility */
 #returnDateGroup {
   transition: all 0.3s ease-in-out;
 }
@@ -42,25 +62,24 @@
 
 /* --- ✈️ NEW: Flightfinder Autocomplete Styles --- */
 
-/* This makes sure the suggestions list floats correctly over the form */
 .position-relative {
   position: relative;
 }
 
 .autocomplete-suggestions {
   position: absolute;
-  top: 100%; /* Places it exactly below the input box */
+  top: 100%;
   left: 0;
   right: 0;
   background: white;
   border: 1px solid #ced4da;
   border-top: none;
-  z-index: 2000; /* Ensures it stays on top of buttons and other inputs */
+  z-index: 9999; /* Highest priority to float above buttons */
   max-height: 250px;
   overflow-y: auto;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   border-radius: 0 0 5px 5px;
-  display: none; /* Hidden by default until user types */
+  display: none;
 }
 
 .suggestion-item {
