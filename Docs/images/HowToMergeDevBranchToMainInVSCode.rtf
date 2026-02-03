@@ -1,0 +1,85 @@
+====== how to create branch in VS code via terminal =======
+1- check your current branch: 
+> git branch
+2- now you want to branch from main to feature branch (Create a new branch:)
+> git branch feature
+
+3- Switch to that branch:
+> git checkout feature
+then feature branch is seen on the source control
+4- Push it to remote (GitHub/GitLab/etc.):
+> git push -u origin feature
+
+
+
+========= How to merge feature branch to main in VS code in Git repository ============
+Step-by-Step: Merge dev into main in VS Code\par
+- Switch to the main branch\par
+run in terminal:
+> git checkout main
+- Merge dev into main
+> git merge feature
+- Resolve any merge conflicts (if any)
+- VS Code will highlight conflicts and open the Merge Editor
+- Choose which changes to keep and click \ldblquote Accept\rdblquote
+- Save and commit the merge
+- Push the updated main branch to remote
+> git push origin main
+
+
+======= How to set a tag (label) on git repository via VS code terminal =========
+you should on the branch you want to add tag.
+in VS code terminal: 
+> git tag -a v3.0 -m "your comment here"
+then : Push tags to remote (GitHub/GitLab/etc.)
+
+========= how to check existence tags: 
+> git tag
+then push to remote:
+> git push origin v3.0
+Or push all tags at once:
+> git push origin --tags
+
+=========How to find comment for existence tags in VS code source control ?
+> git tag -n
+
+========== how  to delete a feature branch
+> git branch -d feature
+and remove from the remote (e.g. Github)
+>git push origin --delete feature
+or:
+> git push origin -D feature
+
+============= how to create a Release for Repo
+Option 1: Create release via GitHub Web UI (simplest)
+
+1- Go to your repo on GitHub.
+2-  you see your main branch and  right side of it you see Tags, click tags:  select new tag that you created latest (e.g. V.0) in the right side you see ...
+ and click on and press to the Create release
+3- Fill in title, description, upload any assets.
+4- Click Publish release. then you have a new release.
+5. now if you press to Releases you can see your release.
+
+Option 2: Use GitHub CLI in VS Code
+
+If you want to stay inside VS Code, install the GitHub CLI (gh)
+:
+
+# Authenticate once
+gh auth login
+
+# Create a release from an existing tag
+gh release create v4.0 --title "Release v4.0" --notes "Description of changes"
+
+You can also attach build artifacts:
+
+gh release create v4.0 ./build/output.zip --title "Release v4.0" --notes "Includ
+
+======= how to install Github cli (gh)
+Open PowerShell (or inside VS Code terminal).
+
+Run:
+> winget install --id GitHub.cli
+
+
+

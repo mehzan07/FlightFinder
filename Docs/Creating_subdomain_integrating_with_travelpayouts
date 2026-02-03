@@ -1,0 +1,208 @@
+how to create a white label in travelpayouts website and integrate it with a subdomain in a exciting domain
+Yes, you absolutely can! In fact, using your existing domain is a very smart move because already has some "authority" and age, which looks better to search engines and affiliate programs.softsolutionsahand.comYou have two main ways to integrate FlightFinder into your existing site:1. The Subdomain Method (Recommended)This is the most professional approach and is perfect for the Travelpayouts White Label. You keep your tech articles on the main site and put the flight engine on a "branch."How it looks: flights.softsolutionsahand.comThe Benefit: It separates your tech content from your travel tools. This makes it much easier to set up the CNAME record we discussed earlier without breaking your main website.Setup: In your domain DNS (where you bought the domain), you just add a new CNAME record for "flights" pointing to .whitelabel.travelpayouts.com2. The Subdirectory MethodThis is where you integrate the flight search directly into a page on your current site.How it looks: softsolutionsahand.com/flightsThe Benefit: It keeps all your traffic on one exact URL.Setup: Instead of a White Label, you would use Travelpayouts Widgets (search forms) embedded directly into a WordPress or HTML page on your tech site.Which one should you choose?FeatureSubdomain (flights.)Subdirectory (/flights)Setup DifficultyEasy (CNAME record)Medium (Coding/Embedding)BrandingProfessional Search EnginePart of the Tech BlogWhite Label SupportFull SupportLimited (usually just widgets)SSL CertificateHandled by TravelpayoutsHandled by your own host
+How to do it right now:
+Since your name is Soft Solutions, you could market this as a "Travel Solution" for tech nomads or developers.
+
+In Travelpayouts: Go back to that White Label setup screen you were on.
+
+Website Domain: Enter .flights.softsolutionsahand.com
+
+In your Code: Change your variable to: (Once the DNS is active).MY_WHITELABEL_URL = "flights.softsolutionsahand.com"IS_PRODUCTION = True
+
+Would you like me to show you how to write a "Tech Nomad" themed header for your flight search results so it matches the "Software Solutions" theme of your main site?
+
+Since your site is built with WordPress and hosted with Miss Hosting (using cPanel), you are in a perfect position to integrate your FlightFinder tool professionally.
+
+Recommendation: Use a Subdomain
+Because your current site is a high-quality tech blog, I recommend you do not replace the main page. Instead, create a subdomain like: flights.softsolutionsahand.com
+
+This keeps your "Tech Solutions" and your "Travel Solutions" separate but under the same brand.
+
+How to set this up in Miss Hosting (cPanel):
+Log in to your Miss Hosting Client Area and open cPanel.
+
+Find the "Zone Editor": Under the "Domains" section, click on Zone Editor.
+
+Manage DNS: Click the Manage button next to .softsolutionsahand.com
+
+Add CNAME Record:
+
+Click the arrow next to "Add Record" and select Add "CNAME" Record.
+
+Name: (cPanel will automatically fill it to ).flightsflights.softsolutionsahand.com
+
+Record/Target: whitelabel.travelpayouts.com
+
+TTL: You can leave this at the default (usually 14400 or 3600).
+
+Save Record: Click "Save Record."
+
+How to connect your Flask app:
+Now that you have the domain ready, you can update your code to use it. In your (or wherever you store your config), update your settings:app.py
+
+Python
+
+# Change this to your new subdomain
+MY_WHITELABEL_URL = "flights.softsolutionsahand.com"
+IS_PRODUCTION = True
+
+Brand Consistency: People who read your tech articles will see you as a "Solution Architect" who also built a smart travel tool.
+
+SEO: Having a tool like FlightFinder on a subdomain can actually help the overall "authority" of your main domain.
+
+WordPress integration: You can easily add a "Search Flights" link to your WordPress top menu that points directly to your new flight engine.
+
+Since you're an expert in the Microsoft stack, you'll find the DNS propagation usually takes about 1–4 hours. Would you like me to help you create a WordPress-style "Travel" menu link to put on your main site?
+
+DNS Setup Guide This video provides a step-by-step visual guide on how to configure CNAME records, which is the exact process you'll need for Miss Hosting
+
+Since you already have the edit row open, here is how you finish it:1. Fill in the DetailsIn the empty row you have highlighted, enter these exact values:FieldWhat to enterNameflights (cPanel will likely auto-complete it to flights.softsolutionsahand.com.)TTL3600 (The default value is perfect)TypeCNAME (Make sure this is selected in the dropdown)Recordwhitelabel.travelpayouts.com
+Important: Ensure there are no extra spaces before or after .whitelabel.travelpayouts.com
+
+2. Save and Verify
+Click the Save Record button.
+
+Wait: DNS changes can take anywhere from a few minutes to 72 hours to "propagate" (spread across the internet), though it's often faster.
+
+3. Final Step in Travelpayouts
+Once you have saved the record in cPanel, go back to your Travelpayouts Dashboard:
+
+Go to the White Label section.
+
+Enter in the Website Domain field.flights.softsolutionsahand.com
+
+Click Save or Verify.
+
+Don't worry if it doesn't work instantly—the "A" record below it in your screenshot is for your main site, and it will stay exactly as it is, so your tech blog won't be affected at all.
+
+Adding a CNAME record in cPanel
+
+This video walks you through the exact cPanel Zone Editor interface you are looking at to ensure you click the right buttons.
+
+Get some rest! When you wake up, we can check if the link is "live" and ready for your first users.
+
+How to Add a CNAME Record in cPanel using the DNS Zone Editor - HostMaria Tutorial
+
+HostMaria · 319 views
+
+
+Since you have saved the CNAME record in your cPanel, you are now in the "Propagation Phase." Even though you saved it, the rest of the internet needs a little time to "see" the new address.
+
+Here is how you can test it step-by-step:
+
+1. The "Ping" Test
+The fastest way to see if the DNS is working is to use an online tool that checks servers around the world.
+
+Go to DNSChecker.org.
+
+Type in .flights.softsolutionsahand.com
+
+Select CNAME from the dropdown menu.
+
+Click Search.
+
+What to look for: If you see green checkmarks and the result , your DNS is live!whitelabel.travelpayouts.com
+
+2. Verify in Travelpayouts
+Go back to your Travelpayouts dashboard where you were setting up the White Label.
+
+There should be a button that says "Verify DNS" or "Save".
+
+Click it. If the CNAME is found, the status will change from "Pending" or "Error" to "Active" or "Connected".
+
+3. Test the "Live" URL
+Open a new browser tab and type: https://flights.softsolutionsahand.com
+
+If it works: You will see your new travel search engine with your colors and settings.
+
+If you see a "Not Found" or "SSL Error": Don't panic. Travelpayouts often takes about 30-60 minutes to generate the free SSL certificate for your new domain once they detect the CNAME.
+
+4. Test Your Local Flask App
+Now, go to your code and flip the switch we built earlier:
+
+Open .utils.py
+
+Change .IS_PRODUCTION = True
+
+Save and run your Flask app ().python app.py
+
+Search for a flight and click "Check Best Deal & Book".
+
+After your 2-second loading screen, it should now redirect you to instead of Aviasales.flights.softsolutionsahand.com/...
+
+Troubleshooting
+"I see a 404 error": This usually means the CNAME is working, but Travelpayouts hasn't finished setting up the "White Label" on their side yet. Give it 1 hour.
+
+"The site is not secure": Travelpayouts is currently issuing your SSL certificate. This happens automatically but can take a little while.
+
+Since you're done for the day, would you like me to check the status of your domain for you tomorrow morning to see if it's ready for its "Grand Opening"?
+Since you have already configured your CNAME records in cPanel, you are now at the most exciting part: moving from your computer to a real server.1. How to Test Your SubdomainBefore you even upload your code, you can check if your "Flight Engine" is ready.The Browser Test: Go to .http://flights.softsolutionsahand.comIf it works: You'll see a Travelpayouts-branded search page.If it fails: You might see a "404 Not Found" or a "Connection not secure" error. This is normal! Travelpayouts takes 1–2 hours to generate your SSL certificate (the green lock icon).The DNS Test: Open your terminal (CMD on Windows) and type: If it returns , your DNS work is perfect.nslookup flights.softsolutionsahand.comwhitelabel.travelpayouts.com2. Where to Deploy Your Python CodeSince your main site is WordPress, you cannot host your Python (Flask) code directly inside the WordPress files. You need a dedicated Python host.PlatformBest ForPricePythonAnywhereCleanest setupFree (or $5/mo for custom domains)Render.comModern apps / Automatic GitHub syncFree (spins down when not in use)Miss Hosting (VPS)Full control / Keeping everything in one billVaries ($4-10/mo)My Recommendation: Start with PythonAnywhere. It is designed specifically for Flask, and they have a "Manual Configuration" mode that is very reliable for projects using custom redirects.3. How to Deploy (Step-by-Step for PythonAnywhere)Prepare your files: Make sure you have a file. You can create it by running this in your local terminal: requirements.txtpip freeze > requirements.txtUpload: In the PythonAnywhere dashboard, go to the Files tab and upload your , , and .app.pytemplates/requirements.txtVirtual Environment: Open a "Bash Console" on their site and run:mkvirtualenv --python=/usr/bin/python3.10 my-envpip install -r requirements.txtWeb Tab: Click "Add a new web app," choose "Manual Configuration," and select Python 3.10.WSGI Config: They will give you a "WSGI configuration file" to edit. You just need to point it to your :app.pyPythonimport sys
+path = '/home/yourusername/your_folder_name'
+if path not in sys.path:
+    sys.path.insert(0, path)
+from app import app as application
+4. Integrate with your WordPress siteOnce your Flask app is live (e.g., at ), go to your WordPress Dashboard:yourname.pythonanywhere.comGo to Appearance > Menus.Add a Custom Link.URL: (Your Flask Search Page).https://yourname.pythonanywhere.comLink Text: "Find Cheap Flights".Now, when visitors on click that link, they go to your Flask app, search for a flight, see your cool redirect screen, and land on your professional subdomain!softsolutionsahand.comPythonAnywhere Flask setup tutorialThis video provides a visual walk-through of the PythonAnywhere dashboard, which is helpful since you're moving from a local environment to a hosted one for the first time.Would you like me to help you write the requirements.txt file or the WSGI configuration code for your specific folder structure?
+
+Which one should you choose?
+Use Miss Hosting (cPanel) if you want everything in one place, you don't want to pay extra, and you are comfortable working inside a file manager. This is your "Production" server.
+
+Use PythonAnywhere if you find cPanel too complicated and want a platform that is 100% built for Python. It is a great "Backup" or "Testing" ground.
+
+Since you already pay for Miss Hosting, I recommend using it first. It is powerful enough for your FlightFinder, and you won't have to manage two different billing accounts.
+
+How they work together (The Final Workflow)
+Here is exactly how your project will live on your domain:
+
+WordPress (softsolutionsahand.com): This is your main site where your tech articles stay.
+
+Flask App (softsolutionsahand.com/search): This is where your code will live. When a user goes here, they see your search form.
+
+White Label (flights.softsolutionsahand.com): This is the "results engine" provided by Travelpayouts. Your Flask app sends users here after they click "Book."
+
+Step-by-Step Deployment on Miss Hosting (cPanel)
+If you have 10 minutes, let's try to get your code onto your real server right now:
+
+1. Create the App
+Go to your cPanel > Setup Python App.
+
+Python Version: 3.10 or 3.11.
+
+Application root: (This creates a folder in your home directory).flightfinder
+
+Application URL: Select and type in the box next to it.softsolutionsahand.comsearch
+
+Click Create.
+
+2. Upload Your Code
+Open File Manager in cPanel.
+
+Go to the new folder.flightfinder
+
+Upload your , folder, and .app.pytemplates/requirements.txt
+
+Edit passenger_wsgi.py: cPanel creates this file automatically. Open it, delete everything inside, and paste only this:
+
+Python
+
+from app import app as application
+3. Install Flask on the Server
+Go back to Setup Python App.
+
+In the "Configuration files" section, type and click Add.requirements.txt
+
+Click Run Pip Install.
+
+How to test if it's working
+Once you finish those steps, open your browser and go to: https://softsolutionsahand.com/search
+
+If you see your search form, congratulations! You have just deployed a Python web application.
+
+Would you like me to show you how to hide the "search" part of the URL so it looks even cleaner, or do you want to try the cPanel setup first?
+
+Deploying Flask App on cPanel
+
+This video provides a practical, visual guide for using the cPanel "Setup Python App" tool, which is exactly the feature provided by Miss Hosting for your deployment.
+
+Python + Flask App using cPanel (basic "hello world" page) - YouTube
+
+Tim Nelson · 4.2 tn views

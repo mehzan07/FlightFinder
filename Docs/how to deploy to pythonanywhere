@@ -1,0 +1,82 @@
+
+
+Upload Your Files
+Log in to PythonAnywhere and click the Files tab.
+
+Go into the folder.mysite/
+
+Upload: .app.py
+
+Templates: Create a new folder named inside . Enter it and upload and .templatesmysite/index.htmlredirect.html
+
+2. Set Up the Virtual Environment
+This keeps your project's libraries (like Flask) organized.
+
+Go to the Consoles tab and open a Bash console.
+
+Run these commands (wait for the first to finish before typing the second):
+
+Bash
+
+mkvirtualenv --python=/usr/bin/python3.10 flight-env
+pip install flask requests
+3. Connect the Web App
+Go to the Web tab.
+
+Click "Add a new web app" (choose "Manual Configuration" and "Python 3.10").
+
+Virtualenv section: Enter in the box. It will automatically find the path.flight-env
+
+WSGI Section: Click the link for the "WSGI configuration file." Delete the example code and paste this:
+
+Python
+
+import sys
+import os
+
+path = '/home/mehzan07/mysite'
+if path not in sys.path:
+    sys.path.insert(0, path)
+
+from app import app as application
+Save and hit the green Reload button on the Web tab.
+
+4. Connect to WordPress
+Go to your WordPress Dashboard > Appearance > Menus.
+
+Add a Custom Link.
+
+URL: https://mehzan07.pythonanywhere.com
+
+Link Text: "Find Cheap Flights"
+
+One Important Note on the "Whitelist"
+PythonAnywhere free accounts only allow outgoing internet connections to specific "whitelisted" sites. If your search fails, it's likely because Travelpayouts isn't on the list yet.
+
+Check the list: PythonAnywhere Whitelist
+
+Request an addition: If isn't there, send a quick message to with a link to the travelpayouts.comsupport@pythonanywhere.comTravelpayouts API documentation. They are usually very helpful!
+
+When you're ready to do this, would you like me to double-check your app.py code to make sure the redirect to flights.softsolutionsahand.com is 100% correct?
+
+
+
+
+
+
+
+
+
+
+
+Deploying a Flask Flight Search App to PythonAnywhereAuthor: Gemini AI Thought Partner | Date: January 2, 
+20261. Environment Setup (The "Box")Always use a Virtual Environment to keep your libraries organized.Open a
+ Bash Console.Create your environment (if not already done): mkvirtualenv flight-env --python=python3.10Crucial: 
+ Ensure your console prompt starts with .(flight-env)2. Installing Required LibrariesRun this "Master Command" 
+ in your Bash console to install every dependency your app requires:Bashpip install flask flask-sqlalchemy 
+ flask-migrate amadeus requests dateparser word2number spacy python-dotenv psycopg2-binary flask-cors
+Special Step for NLP:If your app uses spaCy for city/date recognition, you must download the language 
+model:Bashpython -m spacy download en_core_web_sm
+3. Mandatory File ChecklistEnsure these files are uploaded to via the Files tab:/home/mehzan07/app.py 
+(Main entry point)database.py (Database configuration)flight_search.py & amadeus_search.py (API logic)utils.py (Helper functions).env (Contains your API Keys: , etc.)AMADEUS_KEYFolder: (Must contain your files)templates/.html4. Web Tab ConfigurationGo to the Web tab and verify these settings:Source Code: /home/mehzan07/Virtualenv: Click and enter (It should resolve to flight-env/home/mehzan07/.virtualenvs/flight-env)Force HTTPS: Set to Enabled.Static Files: If you have CSS/JS, map to ./static//home/mehzan07/static/5. Troubleshooting: The "Error Loop"When you see "Something went wrong," do not guess. Follow the Log Trail:Step A: Find the LogGo to the Web Tab.Click the link ending in error.log.Scroll to the very bottom.Step B: Identify the Error TypeError MessageMeaningFixModuleNotFoundError: No module named 'X'A library is missing.pip install X in Bash console.ModuleNotFoundError: No module named 'database'A local file is missing.Upload the missing .py file.OperationalError / Connection TimeoutDatabase connection failed.Check your .env database URL.KeyError: 'AMADEUS_API_KEY'API Key is missing.Add the key to your .env file or Environment Variables.6. Applying ChangesAny time you install a library, 
+upload a file, or change code, you must go to the Web tab and click:[ ⟳ Reload mehzan07.pythonanywhere.com ]
