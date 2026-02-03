@@ -7,7 +7,7 @@ from typing import Dict, Any
 
 import dateparser
 from word2number import w2n
-import spacy
+
 
 import os
 import requests
@@ -18,7 +18,7 @@ from config import AFFILIATE_MARKER
 marker = AFFILIATE_MARKER or os.getenv("AFFILIATE_MARKER", "")
 
 logger = logging.getLogger(__name__)
-nlp = spacy.load("en_core_web_sm")
+
 
 
 def normalize_passenger_count(text: str) -> int:
@@ -69,9 +69,9 @@ def extract_travel_entities(user_input: str) -> Dict[str, Any]:
             info["trip_type"] = "round-trip"
         elif one_way_match:
             info["date_from"] = datetime.strptime(one_way_match.group(1), "%Y-%m-%d")
-            info["trip_type"] = "one-way"    
+            info["trip_type"] = "one-way"
     except ValueError:
-        print("⚠️ Invalid date format detected.") 
+        print("⚠️ Invalid date format detected.")
 
     print(f"📅 Parsed dates: from={info.get('date_from')} to={info.get('date_to')}")
 
@@ -92,7 +92,7 @@ def extract_travel_entities(user_input: str) -> Dict[str, Any]:
     elif len(iata_matches) == 1:
         info["origin_code"] = iata_matches[0].strip().upper()
         info["destination_code"] = ""  # fallback
-        
+
     # 🧠 Optional: fallback if city names weren't matched
     if not info.get("origin") and "origin_code" in info:
         info["origin"] = info["origin_code"]
@@ -144,18 +144,18 @@ def extract_iata(text):
 
 
 def format_ddmm(date_val):
-    if not date_val: 
+    if not date_val:
         return ""
-    
+
     # 1. Handle if it's already a datetime object
     if isinstance(date_val, datetime):
         return date_val.strftime("%d%m")
-    
+
     try:
         # 2. Clean the string: Remove time (T00:00) and extra spaces
         # Works for "2025-12-10T10:30" or "2025-12-10 10:30"
         date_str = str(date_val).split('T')[0].split(' ')[0].strip()
-        
+
         # 3. Handle YYYY-MM-DD format
         if '-' in date_str:
             parts = date_str.split('-')
@@ -163,18 +163,18 @@ def format_ddmm(date_val):
                 day = parts[2].zfill(2)   # Ensures "5" becomes "05"
                 month = parts[1].zfill(2) # Ensures "1" becomes "01"
                 return f"{day}{month}"
-        
+
         # 4. Fallback: Try a generic parse if format is weird (e.g., "12/10/2025")
         parsed = dateparser.parse(date_str)
         if parsed:
             return parsed.strftime("%d%m")
-            
+
     except Exception as e:
         logger.warning(f"Could not format date '{date_val}': {e}")
-        
+
     return ""
-    
-    
+
+
 from utils import extract_iata # Ensure this is imported
 
 
@@ -186,11 +186,11 @@ def build_flight_deeplink(flight, marker, currency="SEK"):
     try:
         trip_type = flight.get("trip_type", "round-trip")
         adults_count = str(flight.get("adults") or flight.get("passengers") or "1")
-        
+
         # 1. Start with the basics (Leg 1)
         origin1 = clean_iata(str(flight.get("origin_code") or flight.get("origin", "")))
         dest1 = clean_iata(str(flight.get("destination_code") or flight.get("destination", "")))
-        
+
         # Extract date and convert to DDMM (e.g., 2025-12-15 -> 1512)
         raw_date1 = flight.get("depart_date") or flight.get("depart")
         date1 = format_ddmm(raw_date1)
@@ -203,7 +203,7 @@ def build_flight_deeplink(flight, marker, currency="SEK"):
             # The old code just appends DATE2 + DEST2 to the end
             raw_date2 = flight.get("depart_date_2") or flight.get("date_2")
             dest2_raw = flight.get("destination_code_2") or flight.get("destination_2")
-            
+
             if raw_date2 and dest2_raw:
                 date2 = format_ddmm(raw_date2)
                 dest2 = clean_iata(str(dest2_raw))
@@ -224,7 +224,7 @@ def build_flight_deeplink(flight, marker, currency="SEK"):
         # Note: We use the HOST from config if available, or default to aviasales.com
         from config import HOST
         base_host = HOST if 'HOST' in locals() else "www.aviasales.com"
-        
+
         return f"https://{base_host}/search/{search_code}?marker={marker}&currency={currency}"
 
     except Exception as e:
@@ -235,7 +235,7 @@ def build_flight_deeplink(flight, marker, currency="SEK"):
 
 
 
-    
+
 from datetime import timedelta
 import re
 from typing import Optional
@@ -243,23 +243,23 @@ from typing import Optional
 def parse_iso_duration(duration_str: str) -> timedelta:
     """
     Parses an ISO 8601 duration string (e.g., 'PT1H30M', 'P1D') into a timedelta object.
-    
+
     Amadeus provides duration in this format.
     """
     if not duration_str:
         return timedelta()
-        
+
     # Regex to find P, T, H, M, S components
     duration_regex = re.compile(
         r'P(?:(?P<days>\d+)D)?(?:T(?:(?P<hours>\d+)H)?(?:(?P<minutes>\d+)M)?(?:(?P<seconds>\d+)S)?)?'
     )
     match = duration_regex.match(duration_str)
-    
+
     if not match:
         return timedelta()
-        
+
     parts = match.groupdict()
-    
+
     # Convert parts to integers, defaulting to 0 if not present
     return timedelta(
         days=int(parts.get('days') or 0),
@@ -273,16 +273,16 @@ def format_duration(duration_td: timedelta) -> str:
     Formats a timedelta object into a human-readable string (e.g., '1h 30m').
     """
     total_seconds = int(duration_td.total_seconds())
-    
+
     hours = total_seconds // 3600
     minutes = (total_seconds % 3600) // 60
-    
+
     parts = []
     if hours > 0:
         parts.append(f"{hours}h")
     if minutes > 0:
         parts.append(f"{minutes}m")
-    
+
     return " ".join(parts) if parts else "0m"
 
 
@@ -290,9 +290,9 @@ def to_ddmm(date_str: Optional[str]) -> str:
     """
     Converts a YYYY-MM-DD date string to a DDMM format used for Travelpayouts manual links.
     """
-    if not date_str or len(date_str) < 10: 
+    if not date_str or len(date_str) < 10:
         return ""
-    
+
     # Example: "2025-12-15" -> "1512"
     return date_str[8:10] + date_str[5:7]
 
@@ -376,7 +376,7 @@ def get_airline_name(code):
     """Translates IATA code to readable name, or returns code if unknown"""
     if not code:
         return "Multiple"
-    
+
     clean_code = str(code).strip().upper()
     # .get() looks for the code. If not found, it returns the original clean_code
     return AIRLINE_NAMES.get(clean_code, clean_code)

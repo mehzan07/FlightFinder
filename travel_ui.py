@@ -28,7 +28,7 @@ from flight_search import get_combined_flight_results, search_flights as search_
 from iata_codes import city_to_iata
 from travel import generate_booking_reference, travel_form_handler
 
-from urllib.parse import urlencode 
+from urllib.parse import urlencode
 from config import get_logger, AFFILIATE_MARKER, API_TOKEN
 logger = get_logger(__name__)
 
@@ -36,7 +36,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 offers_db = {}
-travel_bp = Blueprint("travel", __name__) 
+travel_bp = Blueprint("travel", __name__)
 
 # === Helper Functions ===
 
@@ -108,7 +108,7 @@ def travel_ui():
             return render_template("travel_form.html", errors=errors, form_data=form_data)
 
         user_input = f"Fly from {origin_code} to {destination_code} from {date_from_raw}"
-        
+
         try:
             result = travel_chatbot(user_input, trip_type=trip_type, limit=limit, direct_only=direct_only)
             offers_db.clear()
@@ -149,19 +149,19 @@ def travel_ui():
 def search_flights():
     """Handler for the flight search form submission"""
     logger.info("search_flights route hit")
-    
+
     # 1. Get Form Data
     origin_raw = extract_iata(request.form.get("origin_code", ""))
     dest1_raw = extract_iata(request.form.get("destination_code", ""))
     dest2_raw = extract_iata(request.form.get("destination_code_2", ""))
-    
+
     depart_date = request.form.get("date_from", "")
     depart_date_2 = request.form.get("date_from_2")
     return_date = request.form.get("date_to", "")
     trip_type = request.form.get("trip_type", "round-trip")
     passengers = request.form.get("passengers", "1")
     cabin_class = request.form.get("cabin_class", "economy")
-    
+
     limit = int(request.form.get("limit", config.FEATURED_FLIGHT_LIMIT))
     direct_only = request.form.get("direct_only") == "on"
 
@@ -171,7 +171,7 @@ def search_flights():
     display_dest2 = get_city_name(dest2_raw) if dest2_raw else None
 
     if not origin_raw or not dest1_raw or not depart_date:
-        return render_template("travel_form.html", 
+        return render_template("travel_form.html",
                                errors=["Please provide origin, destination, and departure date"],
                                form_data=request.form)
 
@@ -192,13 +192,13 @@ def search_flights():
                 # A. Inject basic trip data
                 flight["trip_type"] = trip_type
                 flight["passengers"] = passengers
-                
+
                 # B. CAPTURE AND CLEAN AIRLINE CODE
                 # We check multiple possible keys from different APIs
                 raw_code = (
-                    flight.get("airline_code") or 
-                    flight.get("airline") or 
-                    flight.get("carrierCode") or 
+                    flight.get("airline_code") or
+                    flight.get("airline") or
+                    flight.get("carrierCode") or
                     "XX"
                 )
                 clean_code = str(raw_code).strip().upper()[:2]
@@ -220,22 +220,22 @@ def search_flights():
                 clean_link = parsed.path
                 if parsed.query:
                     clean_link += f"?{parsed.query}"
-                
+
                 if not clean_link.startswith("/"):
                     clean_link = "/" + clean_link
 
                 flight["deeplink"] = clean_link
                 safe_flights.append(flight)
-        
+
         # 5. Render Template with Processed Data
         return render_template(
             "search_results.html",
             flights=safe_flights[:limit],
             origin=display_origin,
             destination=display_dest1,
-            destination_2=display_dest2,  
+            destination_2=display_dest2,
             depart_date=depart_date,
-            depart_date_2=depart_date_2,    
+            depart_date_2=depart_date_2,
             return_date=return_date,
             trip_type=trip_type,
             currency="SEK",  # Hardcoded for your requirement
@@ -244,8 +244,8 @@ def search_flights():
 
     except Exception as e:
         logger.error(f"Search error: {traceback.format_exc()}")
-        return render_template("travel_form.html", 
-                               errors=[f"Search failed: {str(e)}"], 
+        return render_template("travel_form.html",
+                               errors=[f"Search failed: {str(e)}"],
                                form_data=request.form)
 
 @travel_bp.route('/flights/results', methods=['GET'])
@@ -255,13 +255,13 @@ def flight_results():
     destination = request.args.get('destination', '').upper()
     date_from = request.args.get('date_from')
     date_to = request.args.get('date_to')
-    
+
     trip_type = request.args.get('trip_type', 'one-way')
     origin_2 = request.args.get('origin_2', '').upper()
    # destination_2 = request.args.get('destination_2', '').upper()
     destination_2 = (request.form.get('destination_code_2') or request.args.get('destination_2')).upper()
     date_from_2 = request.args.get('date_from_2')
-    
+
     currency = request.args.get('currency', 'EUR')
     adults = request.args.get('adults', type=int) or 1
 
@@ -292,16 +292,16 @@ def flight_results():
                     flight["origin_2"] = origin_2 if origin_2 else destination
                     flight["destination_2"] = destination_2
                     flight["depart_date_2"] = date_from_2
-                
+
                 # Re-build the deeplink with the full data
                 # marker is imported from utils
                 flight["deeplink"] = build_flight_deeplink(flight, marker, currency)
-                
+
                 processed_flights.append(flight)
 
         # 4. Render with explicit variables for the Header
         return render_template(
-            'search_results.html', 
+            'search_results.html',
             flights=processed_flights,
             origin=origin,
             destination=destination,
@@ -315,22 +315,22 @@ def flight_results():
     except Exception as e:
         logger.error(f"Flight search route failed: {e}")
         return render_template('search_results.html', error=f"Error: {e}", flights=[])
-    
-    
-    
+
+
+
 @travel_bp.route('/search/<path:search_code>')
 def redirect_to_aviasales(search_code):
     raw_qs = request.query_string.decode('utf-8')
-    
+
     if search_code == "multi":
         # Multi-city MUST go to search.aviasales.com/flights/ with segments
         target_url = f"https://search.aviasales.com/flights/?{raw_qs}"
     else:
         # Standard one-way/round-trip
         target_url = f"https://www.aviasales.com/search/{search_code}?{raw_qs}"
-        
+
     return redirect(target_url)
- 
+
 
 @travel_bp.route("/book-flight")
 def book_flight():
@@ -341,14 +341,14 @@ def book_flight():
     target_url = request.args.get("url", "")
     destination_name = request.args.get("dest", "your destination")
     airline_name = request.args.get("airline", "our partner")
-    
+
     if not target_url:
         logger.error("book_flight called without a target URL")
         return redirect(url_for("travel.travel_ui"))
 
-    return render_template("redirect.html", 
-                           url=target_url, 
-                           destination=destination_name, 
+    return render_template("redirect.html",
+                           url=target_url,
+                           destination=destination_name,
                            airline=airline_name)
 
 @travel_bp.route("/autocomplete-airports")
@@ -383,23 +383,18 @@ def flightfinder():
     return redirect(url_for("travel.travel_ui"))
 
 
-import os
-import json
-import requests
-from flask import jsonify, request
-
 
 # using both local and pythonanywhere by looking to the IS_LOCAL variable.
 @travel_bp.route('/search-airports')
 def search_airports():
+    is_local = os.getenv('IS_LOCAL', 'False').lower() == 'true'
     query = request.args.get('term', '').lower()
     if len(query) < 2:
         return jsonify([])
 
-    # Auto-detect if we are on PythonAnywhere
-    IS_LOCAL = 'pythonanywhere' not in os.environ.get('HOME', '')
 
-    if IS_LOCAL:
+    if is_local:
+        # --- API PATH ---
         url = f"https://autocomplete.travelpayouts.com/places2?term={query}&locale=en&types[]=city&types[]=airport"
         try:
             response = requests.get(url, timeout=5)
@@ -408,18 +403,18 @@ def search_airports():
         except Exception as e:
             print(f"API Error: {e}")
 
-    # --- Fallback/Production: Local File ---
+    # --- PRODUCTION PATH (PythonAnywhere) Load local file: airports.json
     file_path = os.path.join(os.path.dirname(__file__), 'airports.json')
     try:
         with open(file_path, 'r', encoding='utf-8') as f:
             data = json.load(f)
-        
+
         results = []
         for item in data:
-            if (query in item.get('city', '').lower() or 
-                query in item.get('name', '').lower() or 
+            if (query in item.get('city', '').lower() or
+                query in item.get('name', '').lower() or
                 query in item.get('iata', '').lower()):
-                
+
                 # ✅ KEY FIX: We map 'city' to 'country_name' and 'iata' to 'code'
                 # so your JavaScript template `${item.country_name}` doesn't break.
                 results.append({
