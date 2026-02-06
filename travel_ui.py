@@ -201,6 +201,15 @@ def search_flights():
                     flight.get("carrierCode") or
                     "XX"
                 )
+                # C. Generate the monetized link
+                # This uses the helper function we added to create the final URL
+                flight['monetized_url'] = generate_booking_link(
+                flight.get('origin'), 
+                flight.get('destination'), 
+                flight.get('depart_date_formatted')
+                )
+                
+                
                 clean_code = str(raw_code).strip().upper()[:2]
                 flight["airline_code"] = clean_code
 
@@ -430,3 +439,16 @@ def search_airports():
 @travel_bp.route("/health", methods=["GET"])
 def health():
     return jsonify({'status': 'ok', 'timestamp': datetime.utcnow().isoformat(), 'service': 'FlightFinder'})
+
+
+
+# Creates a monetized link to Aviasales search results
+def generate_booking_link(origin, destination, date):
+    marker = "665788"
+    # If any data is missing, we send them to the Aviasales home page 
+    # with your marker so you still get credit!
+    if not origin or not destination or not date:
+        return f"https://www.aviasales.com/?marker={marker}"
+    
+    # Otherwise, build the specific search link
+    return f"https://www.aviasales.com/search/{origin}{date}{destination}1?marker={marker}"
