@@ -1,5 +1,6 @@
 {
   "name": "FlightFinder",
+  "id": "/travel-ui",
   "short_name": "FlightFinder",
   "theme_color": "#007bff",
   "background_color": "#ffffff",
