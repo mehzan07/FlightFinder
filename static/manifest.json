@@ -21,7 +21,7 @@
       "type": "image/png",
       "purpose": "any"
     }
-  ]
+  ],
   "screenshots": [
     {
       "src": "static/screenshot-desktop.png",
@@ -32,7 +32,7 @@
     },
     {
       "src": "static/screenshot-mobile.png",
-      "sizes": "504x822", 
+      "sizes": "504x822",
       "type": "image/png",
       "label": "Mobile View"
     }
