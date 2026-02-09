@@ -22,4 +22,19 @@
       "purpose": "any"
     }
   ]
+  "screenshots": [
+    {
+      "src": "static/screenshot-desktop.png",
+      "sizes": "1294x810",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "Desktop View"
+    },
+    {
+      "src": "static/screenshot-mobile.png",
+      "sizes": "504x822", 
+      "type": "image/png",
+      "label": "Mobile View"
+    }
+  ]
 }
