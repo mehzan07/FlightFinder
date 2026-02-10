@@ -454,6 +454,6 @@ def generate_booking_link(origin, destination, date):
     return f"https://www.aviasales.com/search/{origin}{date}{destination}1?marker={marker}"
 
 
-@app.route('/offline')
+@travel_bp.route('/offline')
 def offline():
     return render_template('offline.html')

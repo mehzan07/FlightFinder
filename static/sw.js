@@ -1,5 +1,5 @@
 const CACHE_NAME = "flightfinder-v1";
-const OFFLINE_URL = "/offline"; // Ensure you have a route in your Flask app for this
+const OFFLINE_URL = '/travel-ui/offline'; // Update this to match your blueprint path
 
 // 1. Install - Cache the offline page
 self.addEventListener("install", (event) => {
