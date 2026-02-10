@@ -1,19 +1,17 @@
 {
   "name": "FlightFinder",
-  "id": "/travel-ui",
-  "short_name": "FlightFinder",
-  "theme_color": "#007bff",
-  "background_color": "#ffffff",
-  "display": "standalone",
-  "orientation": "portrait",
-  "scope": "/",
+  "short_name": "Flights",
   "start_url": "/travel-ui",
+  "display": "standalone",
+  "background_color": "#764ba2",
+  "theme_color": "#764ba2",
+  "description": "Find the best flight deals instantly.",
   "icons": [
     {
       "src": "/static/icon-192.png",
       "sizes": "192x192",
       "type": "image/png",
-      "purpose": "any"
+      "purpose": "any maskable"
     },
     {
       "src": "/static/icon-512.png",
@@ -24,16 +22,17 @@
   ],
   "screenshots": [
     {
-      "src": "static/screenshot-desktop.png",
+      "src": "/static/screenshot-desktop.png",
       "sizes": "1294x810",
       "type": "image/png",
       "form_factor": "wide",
       "label": "Desktop View"
     },
     {
-      "src": "static/screenshot-mobile.png",
+      "src": "/static/screenshot-mobile.png",
       "sizes": "504x822",
       "type": "image/png",
+      "form_factor": "narrow",
       "label": "Mobile View"
     }
   ]
