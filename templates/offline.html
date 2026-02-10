@@ -1,0 +1,9 @@
+{% extends 'base.html' %}
+{% block content %}
+  <div class="container text-center" style="padding-top: 100px;">
+    <div style="font-size: 80px;">✈️</div>
+    <h1 class="mt-4">You're Offline</h1>
+    <p class="lead text-muted">It looks like you don't have an internet connection right now. Don't worry, your FlightFinder is ready when you are!</p>
+    <button onclick="window.location.reload()" class="btn btn-primary btn-lg mt-3" style="background-color: #764ba2; border: none;">Try Reconnecting</button>
+  </div>
+{% endblock %}
