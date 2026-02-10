@@ -10,6 +10,7 @@
     "elif",
     "noopener",
     "noreferrer",
+    "onclick",
     "shmarker"
   ]
 }

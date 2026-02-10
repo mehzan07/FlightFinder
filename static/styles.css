@@ -109,3 +109,49 @@ li:has(a[href*="account"]) {
   background-color: #ccc;
   border-radius: 10px;
 }
+
+/* Refined Back Button */
+/* This selector is very specific to ensure it wins the 'fight' against other styles */
+html body .container .btn-back {
+  background: linear-gradient(135deg, #28a745 0%, #218838 100%) !important;
+  background-color: #28a745 !important;
+  color: #ffffff !important;
+  padding: 14px 32px !important;
+  border: none !important;
+  border-radius: 8px !important;
+  font-size: 16px !important;
+  font-weight: 600 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  cursor: pointer !important;
+  margin-bottom: 25px !important;
+  box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3) !important;
+  -webkit-appearance: none; /* Disables default mobile button styling */
+}
+
+.btn-back:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(40, 167, 69, 0.4);
+  color: white !important;
+}
+
+.buy-button {
+  display: inline-block;
+  background: linear-gradient(135deg, #03a9f4, #0288d1);
+  color: white;
+  padding: 10px 20px;
+  text-decoration: none;
+  border-radius: 25px;
+  font-weight: bold;
+  font-size: 14px;
+  transition:
+    transform 0.2s,
+    box-shadow 0.2s;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.buy-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+  color: white;
+}
