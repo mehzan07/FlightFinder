@@ -1,6 +1,6 @@
 /**
- * Flightfinder.js - Final Corrected Version
- * Handles Autocomplete, UI Toggles, Reset, and Force Hiding Nav
+ * Flightfinder.js - Updated Version
+ * Handles Autocomplete, UI Toggles, Reset, Loading States, and Back-Button Fix
  */
 
 // --- 1. THE AUTOCOMPLETE ENGINE ---
@@ -47,9 +47,10 @@ function setupAirportAutocomplete(inputId, hiddenId) {
 }
 
 $(document).ready(function () {
-  // 1. Initial UI State & Un-hang Logic
+  // 1. Initial UI State
   $("#loading").hide();
-  $('button[type="submit"]').prop("disabled", false).text("Search Flights");
+  const $searchBtn = $('#searchForm button[type="submit"]');
+  $searchBtn.prop("disabled", false).text("Search Flights");
 
   // Initialize Autocomplete
   setupAirportAutocomplete("origin_text", "origin_code");
@@ -63,11 +64,9 @@ $(document).ready(function () {
     }
   });
 
-  // 2. Trip Type Toggle (Fixes Multi-City hanging)
+  // 2. Trip Type Toggle
   $("#trip_type").on("change", function () {
     const selectedType = $(this).val();
-
-    // Reset disabled states to prevent stuck inputs
     $("#searchForm input").prop("disabled", false);
 
     if (selectedType === "multi-city") {
@@ -94,12 +93,12 @@ $(document).ready(function () {
     $("[id$='-list']").empty().hide();
     $(".autocomplete-suggestions").empty().hide();
 
-    // Reset Search Button
-    $('button[type="submit"]').prop("disabled", false).text("Search Flights");
+    // Reset Search Button & Hide Loading
+    $searchBtn.prop("disabled", false).text("Search Flights");
     $("#loading").hide();
   });
 
-  // 4. Submit Handler
+  // 4. Submit Handler (Shows the Spinner)
   $("#searchForm").on("submit", function () {
     // Multi-city safety check
     if (
@@ -110,6 +109,7 @@ $(document).ready(function () {
       return false;
     }
 
+    // Auto-fill hidden codes if user typed them manually
     ["origin", "destination", "destination_2"].forEach(function (prefix) {
       const textVal = $("#" + prefix + "_text").val();
       const $hidden = $("#" + prefix + "_code");
@@ -119,27 +119,30 @@ $(document).ready(function () {
       }
     });
 
+    // UI FEEDBACK: Show spinner and change button
     $("#loading").show();
-    $(this)
-      .find('button[type="submit"]')
+    $searchBtn
       .prop("disabled", true)
-      .text("Searching...");
+      .html(
+        '<span class="spinner-border spinner-border-sm"></span> Searching...',
+      );
+
     return true;
   });
 
-  // 5. Force hide the navigation elements via JavaScript
-  // This is the fallback if CSS fails
+  // 5. Force hide navigation fallback
   $(
     "nav a:contains('History'), nav a:contains('Account'), nav a:contains('Booking')",
   ).each(function () {
     $(this).closest("li, .nav-item").hide();
     $(this).hide();
   });
-  $("a[href*='history'], a[href*='account'], a[href*='profile']").hide();
 });
 
-// 6. Fix for "Back Button" hang
+// 6. iPhone/Safari "Back Button" Fix
+// This resets the UI immediately when navigating back to the page
 window.onpageshow = function (event) {
   $("#loading").hide();
-  $('button[type="submit"]').prop("disabled", false).text("Search Flights");
+  const $searchBtn = $('#searchForm button[type="submit"]');
+  $searchBtn.prop("disabled", false).text("Search Flights");
 };
