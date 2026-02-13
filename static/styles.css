@@ -11,7 +11,6 @@
 }
 
 /* ✅ HARD HIDE NAVIGATION & CHATBOT */
-/* Target by URL patterns and common IDs to ensure they disappear */
 .chatbot-icon,
 #chatbot-launcher,
 a[href*="history"],
@@ -28,7 +27,6 @@ a[href*="bookings"] {
   padding: 0 !important;
 }
 
-/* Hide the parent container (the <li> or <div>) so there's no empty gap */
 .nav-item:has(a[href*="history"]),
 .nav-item:has(a[href*="account"]),
 .nav-item:has(a[href*="profile"]),
@@ -52,6 +50,9 @@ li:has(a[href*="account"]) {
   margin-top: 2rem;
   font-size: 1.2rem;
   color: #555;
+  background: white;
+  padding: 40px;
+  border-radius: 16px;
 }
 
 #results {
@@ -60,8 +61,7 @@ li:has(a[href*="account"]) {
   border: 2px dashed #ccc;
 }
 
-/* --- ✈️ NEW: Flightfinder Autocomplete Styles --- */
-
+/* --- ✈️ Autocomplete Styles --- */
 .position-relative {
   position: relative;
 }
@@ -74,7 +74,7 @@ li:has(a[href*="account"]) {
   background: white;
   border: 1px solid #ced4da;
   border-top: none;
-  z-index: 9999; /* Highest priority to float above buttons */
+  z-index: 9999;
   max-height: 250px;
   overflow-y: auto;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
@@ -91,67 +91,123 @@ li:has(a[href*="account"]) {
   text-align: left;
 }
 
-.suggestion-item:last-child {
-  border-bottom: none;
-}
-
 .suggestion-item:hover {
   background-color: #e9ecef;
   color: #007bff;
 }
 
-/* Scrollbar styling for the dropdown */
-.autocomplete-suggestions::-webkit-scrollbar {
-  width: 6px;
+/* --- 📱 NATIVE PWA & MOBILE ENHANCEMENTS --- */
+
+.flight-card {
+  background: white;
+  border-radius: 16px !important;
+  padding: 24px;
+  margin-bottom: 20px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.06) !important;
+  border: 1px solid rgba(0, 0, 0, 0.03) !important;
+  transition: transform 0.2s ease;
+  -webkit-tap-highlight-color: transparent;
 }
 
-.autocomplete-suggestions::-webkit-scrollbar-thumb {
-  background-color: #ccc;
-  border-radius: 10px;
+.flight-card:active {
+  transform: scale(0.98);
 }
 
-/* Refined Back Button */
-/* This selector is very specific to ensure it wins the 'fight' against other styles */
-html body .container .btn-back {
+.price-tag {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+  color: white !important;
+  padding: 10px 20px !important;
+  border-radius: 12px !important;
+  font-size: 22px !important;
+  font-weight: bold;
+  box-shadow: 0 4px 10px rgba(118, 75, 162, 0.2);
+}
+
+::-webkit-scrollbar {
+  display: none;
+}
+
+body {
+  padding-top: env(safe-area-inset-top);
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+.hotel-card {
+  background: #f8f9ff;
+  border: 2px dashed #667eea !important;
+  border-radius: 16px !important;
+  padding: 25px;
+  margin-bottom: 25px;
+  text-align: center;
+}
+
+.hotel-btn {
+  background: #ff5722 !important;
+  color: white !important;
+  padding: 14px 28px !important;
+  border-radius: 10px !important;
+  text-decoration: none !important;
+  font-weight: bold;
+  display: inline-block;
+  margin-top: 12px;
+  box-shadow: 0 4px 12px rgba(255, 87, 34, 0.3);
+}
+
+.btn-back {
   background: linear-gradient(135deg, #28a745 0%, #218838 100%) !important;
-  background-color: #28a745 !important;
   color: #ffffff !important;
-  padding: 14px 32px !important;
-  border: none !important;
+  padding: 12px 24px !important;
+  text-decoration: none !important;
   border-radius: 8px !important;
-  font-size: 16px !important;
+  font-size: 14px !important;
   font-weight: 600 !important;
   display: inline-flex !important;
   align-items: center !important;
-  cursor: pointer !important;
-  margin-bottom: 25px !important;
-  box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3) !important;
-  -webkit-appearance: none; /* Disables default mobile button styling */
+  margin-bottom: 20px !important;
+  box-shadow: 0 4px 12px rgba(40, 167, 69, 0.2) !important;
 }
 
-.btn-back:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(40, 167, 69, 0.4);
-  color: white !important;
+/* --- 🍎 iOS INSTALL PROMPT STYLING --- */
+.ios-banner {
+  position: fixed;
+  bottom: 25px;
+  left: 15px;
+  right: 15px;
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-radius: 18px;
+  padding: 18px 22px;
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
+  z-index: 99999;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  animation: slideUp 0.6s cubic-bezier(0.25, 1, 0.5, 1);
 }
 
-.buy-button {
-  display: inline-block;
-  background: linear-gradient(135deg, #03a9f4, #0288d1);
-  color: white;
-  padding: 10px 20px;
-  text-decoration: none;
-  border-radius: 25px;
-  font-weight: bold;
-  font-size: 14px;
-  transition:
-    transform 0.2s,
-    box-shadow 0.2s;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+.ios-banner-content {
+  font-size: 15px;
+  color: #222;
+  line-height: 1.5;
+  padding-right: 15px;
 }
 
-.buy-button:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
-  color: white;
+.ios-close {
+  position: absolute;
+  top: 8px;
+  right: 15px;
+  font-size: 24px;
+  color: #888;
+  cursor: pointer;
+  line-height: 1;
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(120%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
 }

@@ -4,43 +4,25 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Cheap Flights from {{ origin }} to {{ destination }} - FlightFinder</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}?v=1.3">
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 20px; min-height: 100vh; }
-        .container { max-width: 1200px; margin: 0 auto; }
-        
-        .btn-back {
-            background-color: white; border: none; color: #764ba2; padding: 10px 20px;
-            border-radius: 8px; cursor: pointer; margin-bottom: 20px; font-weight: bold;
-            display: inline-flex; align-items: center; box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-            transition: transform 0.2s; text-decoration: none;
+        /* Essential layout styles */
+        body { 
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+            padding: 20px; 
+            min-height: 100vh; 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
-        .btn-back:hover { transform: translateX(-5px); }
-
+        .container { max-width: 1200px; margin: 0 auto; }
         .header { background: white; padding: 24px; border-radius: 12px; margin-bottom: 24px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
         .header h1 { color: #333; font-size: 28px; margin-bottom: 12px; }
         .route-info { color: #666; font-size: 16px; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
         .arrow { color: #667eea; font-weight: bold; font-size: 1.2em; }
-        
-        /* Hotel Card Styling */
-        .hotel-card { 
-            background: #f8f9ff; border: 2px dashed #667eea; border-radius: 12px; 
-            padding: 20px; margin-bottom: 24px; text-align: center; color: #333;
-        }
-        .hotel-btn {
-            background: #ff5722; color: white; padding: 12px 25px; border-radius: 8px;
-            text-decoration: none; font-weight: bold; display: inline-block; margin-top: 10px;
-            box-shadow: 0 4px 10px rgba(255, 87, 34, 0.3); transition: 0.3s;
-        }
-        .hotel-btn:hover { background: #e64a19; transform: scale(1.05); color: white; }
-
         .results-count { background: #f0f4ff; padding: 12px 20px; border-radius: 8px; margin-bottom: 20px; color: #333; font-weight: 500; }
-        .flight-card { background: white; border-radius: 12px; padding: 24px; margin-bottom: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); border-left: 4px solid #667eea; }
+        
         .flight-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 16px; border-bottom: 2px solid #f0f0f0; }
         .airline-badge { min-width: 55px; height: 55px; background: #f8f9fa; border: 2px solid #e9ecef; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-weight: 800; color: #444; }
-        .price-tag { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 12px 24px; border-radius: 8px; font-size: 24px; font-weight: bold; }
         .flight-details { display: grid; grid-template-columns: 1fr auto 1fr; gap: 20px; align-items: center; margin-bottom: 16px; }
-        .segment-time { font-size: 28px; font-weight: bold; color: #333; }
         .path-line { width: 100%; height: 2px; background: #ddd; position: relative; min-width: 100px; }
         .plane-icon { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 4px 8px; }
         .book-btn { background: linear-gradient(135deg, #28a745 0%, #218838 100%); color: white; padding: 14px 32px; text-decoration: none; border-radius: 8px; font-weight: 600; display: inline-block; transition: 0.2s; }
@@ -75,7 +57,7 @@
             {% for flight in flights %}
                 <div class="flight-card">
                     <div class="flight-header">
-                        <div class="airline-info">
+                        <div class="airline-info" style="display: flex; align-items: center;">
                             <div class="airline-badge">{{ flight.airline_display }}</div>
                             <div style="margin-left: 15px;">
                                 <div style="font-weight: bold; font-size: 18px;">{{ flight.airline }}</div>
@@ -86,9 +68,15 @@
                     </div>
                     
                     <div class="flight-details">
-                        <div>{{ flight.depart.split(' ')[1][:5] if (flight.depart and ' ' in flight.depart) else flight.depart }}<br><small>{{ flight.origin }}</small></div>
+                        <div>
+                            <span style="font-size: 24px; font-weight: bold;">{{ flight.depart.split(' ')[1][:5] if (flight.depart and ' ' in flight.depart) else flight.depart }}</span><br>
+                            <small style="color: #666;">{{ flight.origin }}</small>
+                        </div>
                         <div class="path-line"><span class="plane-icon">✈️</span></div>
-                        <div style="text-align: right;">{{ flight.arrival_time }}<br><small>{{ flight.destination }}</small></div>
+                        <div style="text-align: right;">
+                            <span style="font-size: 24px; font-weight: bold;">{{ flight.arrival_time }}</span><br>
+                            <small style="color: #666;">{{ flight.destination }}</small>
+                        </div>
                     </div>
 
                     <div style="text-align: right; margin-top: 15px;">
@@ -96,21 +84,36 @@
                     </div>
                 </div>
             {% endfor %}
-
-            <div class="hotel-card" style="margin-top: 40px; border-style: solid;">
-                <h4>Don't forget your accommodation!</h4>
-                <a href="https://search.hotellook.com/?location={{ destination[:3] }}&checkIn={{ depart_date }}&marker=665788&language=en" target="_blank" class="hotel-btn">
-                    Check Hotel Prices
-                </a>
-            </div>
-
         {% else %}
-            <div style="background: white; padding: 40px; border-radius: 12px; text-align: center;">
+            <div class="no-results">
                 <h2>😕 No flights found</h2>
                 <p>Try different dates or airports.</p>
-                <a href="/travel-ui" style="display: block; margin-top: 20px; font-weight: bold;">← Try Again</a>
+                <a href="/travel-ui" style="display: inline-block; margin-top: 20px; font-weight: bold; color: #764ba2;">← Try Again</a>
             </div>
         {% endif %}
     </div>
+
+    <div id="ios-install-prompt" style="display: none;" class="ios-banner">
+        <div class="ios-banner-content">
+            <div class="ios-close" onclick="closePrompt()">×</div>
+            <p>Install <strong>FlightFinder</strong>: tap <img src="https://img.icons8.com/ios/50/000000/share-rounded.png" width="18"> then <strong>"Add to Home Screen"</strong> <img src="https://img.icons8.com/ios/50/000000/plus-2-math.png" width="18"></p>
+        </div>
+    </div>
+
+    <script>
+        function isIos() {
+            const userAgent = window.navigator.userAgent.toLowerCase();
+            return /iphone|ipad|ipod/.test(userAgent);
+        }
+        function isInStandaloneMode() {
+            return ('standalone' in window.navigator) && (window.navigator.standalone);
+        }
+        if (isIos() && !isInStandaloneMode()) {
+            document.getElementById('ios-install-prompt').style.display = 'block';
+        }
+        function closePrompt() {
+            document.getElementById('ios-install-prompt').style.display = 'none';
+        }
+    </script>
 </body>
 </html>
