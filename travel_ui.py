@@ -338,7 +338,13 @@ def redirect_to_aviasales(search_code):
         # Standard one-way/round-trip
         target_url = f"https://www.aviasales.com/search/{search_code}?{raw_qs}"
 
-    return redirect(target_url)
+   # return redirect(target_url)
+   # Get the destination name from the URL for the loading screen
+    dest_name = request.args.get('dest', 'your destination')
+    
+    # Show the loading page instead of redirecting immediately
+    return render_template("redirect.html", url=target_url, destination=dest_name)
+
 
 
 @travel_bp.route("/book-flight")
@@ -346,15 +352,20 @@ def book_flight():
     """
     Safely captures the booking URL and airline info, then shows the loading page.
     """
-    # Use .get() with defaults to prevent KeyErrors which can cause 500/502 errors
+    # 1. Get the data from the button click
     target_url = request.args.get("url", "")
     destination_name = request.args.get("dest", "your destination")
     airline_name = request.args.get("airline", "our partner")
 
     if not target_url:
-        logger.error("book_flight called without a target URL")
         return redirect(url_for("travel.travel_ui"))
 
+    # 2. THE CRITICAL FIX: Add the domain if the link is relative
+    # This ensures Aviasales gets the full data (Origin, Date, Destination)
+    if target_url.startswith('/'):
+        target_url = f"https://www.jetradar.com{target_url}"
+
+    # 3. Send the fixed link to your redirect page
     return render_template("redirect.html",
                            url=target_url,
                            destination=destination_name,

@@ -2,7 +2,6 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-
     <title>
       {% if form_data %}
         Cheap Flights from {{ form_data.origin_code }} to {{ form_data.destination_code }}
@@ -12,20 +11,11 @@
     </title>
 
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-
-    <meta name="theme-color" content="#764ba2" />
-
+    <meta name="theme-color" content="#667eea" />
     <link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}" />
+    <link rel="apple-touch-icon" href="{{ url_for('static', filename='icon-512.png') }}" />
 
-    <meta name="mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-    <meta name="apple-mobile-web-app-title" content="FlightFinder" />
-    <link rel="apple-touch-icon" href="{{ url_for('static', filename='icon-192.png') }}" />
-
-    <meta name="travelpayouts-verification" content="665788" />
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
-
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}" />
 
     <script>
@@ -33,47 +23,28 @@
         window.addEventListener('load', () => {
           navigator.serviceWorker
             .register("{{ url_for('static', filename='sw.js') }}")
-            .then((reg) => console.log('FlightFinder App Ready!'))
-            .catch((err) => console.log('Setup failed:', err))
+            .then((reg) => console.log('Ready'))
+            .catch((err) => console.log('Failed', err))
         })
       }
     </script>
   </head>
   <body>
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-      <div class="container-fluid">
-        <a class="navbar-brand" href="/travel-ui">FlightFinder</a>
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"><span class="navbar-toggler-icon"></span></button>
-
-        <div class="collapse navbar-collapse" id="navbarNav">
-          <ul class="navbar-nav ms-auto">
-            <li class="nav-item">
-              <a class="nav-link" href="/booking-history">📄 View Booking History</a>
-            </li>
-
-            <li class="nav-item dropdown">
-              <a class="nav-link dropdown-toggle" href="#" id="userMenu" role="button" data-bs-toggle="dropdown">Account</a>
-              <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userMenu">
-                <li>
-                  <a class="dropdown-item" href="/booking-history">📄 View Booking History</a>
-                </li>
-              </ul>
-            </li>
-          </ul>
-        </div>
-      </div>
+    <nav class="app-nav">
+      <a href="/travel-ui" class="nav-brand">✈️ FlightFinder</a>
     </nav>
 
-    <div class="container mt-4">
+    <main class="app-container">
       {% block content %}
 
       {% endblock %}
-    </div>
+    </main>
 
-    <footer class="text-center mt-5 mb-3">
-      <p class="text-muted">&copy; 2026 FlightFinder. All rights reserved.</p>
+    <footer class="text-center mt-4 mb-4">
+      <p class="text-muted" style="font-size: 0.8rem;">&copy; 2026 FlightFinder</p>
     </footer>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="{{ url_for('static', filename='js/ios-pwa.js') }}"></script>
   </body>
 </html>

@@ -61,20 +61,20 @@
       </p>
     </div>
 
+    <meta http-equiv="refresh" content="6" />
+
     <script>
-      // The |safe filter is CRITICAL here to prevent the URL from breaking
       const targetUrl = '{{ url|safe }}'
       
-      if (targetUrl && targetUrl !== '') {
+      if (targetUrl && targetUrl !== 'None' && targetUrl !== '') {
+        // Force the domain if it's missing (helps local development)
+        const finalUrl = targetUrl.startsWith('/') ? 'https://www.jetradar.com' + targetUrl : targetUrl
+      
         setTimeout(function () {
-          window.location.replace(targetUrl)
+          window.location.replace(finalUrl)
         }, 2500)
       } else {
-        console.error('Redirect URL is missing')
-        // Fallback if URL is empty
-        setTimeout(function () {
-          window.location.href = '/travel-ui'
-        }, 3000)
+        window.location.href = '/travel-ui'
       }
     </script>
   </body>
