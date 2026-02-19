@@ -160,3 +160,57 @@ input:checked + .slider {
 input:checked + .slider:before {
   transform: translateX(26px);
 }
+
+/* improve of Search Results UI */
+/* Ensure the page width matches your Search page exactly */
+.unified-app-wrapper {
+  max-width: 480px;
+  margin: 0 auto;
+  padding: 0 15px;
+}
+
+/* Flex container to keep buttons on one row */
+.action-bar {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 10px; /* Brings buttons closer to the 'Found flights' text */
+}
+
+.btn-action {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 5px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 700;
+  text-decoration: none;
+  transition: transform 0.1s;
+}
+
+.btn-action:active {
+  transform: scale(0.98);
+}
+
+/* Back to Search: Soft Indigo/Blue */
+.btn-back {
+  background-color: #667eea;
+  color: white !important;
+  box-shadow: 0 2px 4px rgba(102, 126, 234, 0.2);
+}
+
+/* Find Hotels: Success Green */
+.btn-hotel {
+  background-color: #28a745;
+  color: white !important;
+  box-shadow: 0 2px 4px rgba(40, 167, 69, 0.2);
+}
+
+/* Styling for the 'Found X flights' text */
+.results-count {
+  font-size: 13px;
+  color: #888;
+  margin-bottom: 10px;
+  font-weight: 500;
+}
