@@ -3,73 +3,93 @@
 {% block content %}
 <div class="unified-app-wrapper">
     <div class="header" style="margin-top: 10px;">
-        <h1 style="font-size: 22px; margin: 0; color: #333;">✈️ Flight Search Results</h1>
-        <div class="route-info" style="margin-top: 5px; color: #666; font-size: 14px;">
+        <h1 style="font-size: 24px; margin: 0; color: #333;">✈️ Flight Search Results</h1>
+        <div class="route-info" style="margin-top: 8px; color: #666; font-size: 15px;">
             <span><strong>{{ origin }}</strong></span>
-            <span class="arrow">{% if trip_type in ['round-trip', 'round_trip'] %}⇄{% else %}→{% endif %}</span>
+            <span class="arrow" style="margin: 0 5px;">
+                {% if trip_type in ['round-trip', 'round_trip'] %}⇄{% else %}→{% endif %}
+            </span>
             <span><strong>{{ destination }}</strong></span>
-            <span> | 📅 {{ depart_date }}</span>
+            <span style="color: #ccc; margin: 0 8px;">|</span>
+            <span>📅 {{ depart_date }}</span>
         </div>
     </div>
 
-    <div class="action-bar" style="display: flex; gap: 10px; margin: 15px 0;">
-        <a href="/travel-ui" class="btn-action btn-back" style="flex: 1; text-align: center;">
+    <div class="action-bar" style="display: flex; gap: 12px; margin: 20px 0;">
+        <a href="/travel-ui" class="btn-action btn-back" style="flex: 1;">
             ← Back to Search
         </a>
         <a href="https://search.hotellook.com/?location={{ destination[:3] }}&checkIn={{ depart_date }}&marker=665788&language=en" 
-           target="_blank" class="btn-action btn-hotel" style="flex: 1; text-align: center;">
+           target="_blank" class="btn-action btn-hotel" style="flex: 1;">
             🏠 Find Hotels
         </a>
     </div>
 
     {% if flights %}
-        <div style="margin-bottom: 10px; font-size: 14px; color: #888;">Found {{ flights|length }} flights</div>
+        <div style="margin-bottom: 15px; font-size: 15px; color: #888; font-weight: 500;">
+            Found {{ flights|length }} flights
+        </div>
         
         {% for flight in flights %}
             <div class="flight-card">
                 <div class="flight-header">
-                    <div style="display: flex; align-items: center;">
-                        <div class="airline-badge">{{ flight.airline_display }}</div>
-                        <div style="margin-left: 12px;">
-                            <div style="font-weight: bold;">{{ flight.airline }}</div>
-                            <small style="color: #999;">{{ trip_type|upper }}</small>
+                    <div style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
+                        <div style="display: flex; align-items: center;">
+                            <div class="airline-badge">{{ flight.airline_display }}</div>
+                            <div style="margin-left: 12px;">
+                                <div style="font-weight: bold; color: #333;">{{ flight.airline }}</div>
+                                <small style="color: #aaa; text-transform: uppercase;">{{ trip_type }}</small>
+                            </div>
+                        </div>
+                        <div class="price-tag">
+                            {{ flight.price }} {{ currency or 'SEK' }}
                         </div>
                     </div>
-                    <div class="price-tag">{{ flight.price }} {{ currency or 'SEK' }}</div>
                 </div>
                 
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; text-align: center;">
+                <div class="flight-details">
                     <div style="flex: 1;">
-                        <span style="font-size: 20px; font-weight: bold;">{{ flight.depart.split(' ')[1][:5] if (flight.depart and ' ' in flight.depart) else flight.depart }}</span><br>
-                        <small style="color: #666;">{{ flight.origin }}</small>
+                        <span class="time-display">
+                            {{ flight.depart.split(' ')[1][:5] if (flight.depart and ' ' in flight.depart) else flight.depart }}
+                        </span><br>
+                        <small class="airport-code">{{ flight.origin }}</small>
                     </div>
-                    <div style="flex: 1; color: #ddd; position: relative;">
+                    
+                    <div class="flight-path">
                         <hr>
-                        <span style="position: absolute; top: -12px; left: 40%; background: white; padding: 0 5px;">✈️</span>
+                        <span class="plane-icon">✈️</span>
                     </div>
+                    
                     <div style="flex: 1;">
-                        <span style="font-size: 20px; font-weight: bold;">{{ flight.arrival_time }}</span><br>
-                        <small style="color: #666;">{{ flight.destination }}</small>
+                        <span class="time-display">{{ flight.arrival_time }}</span><br>
+                        <small class="airport-code">{{ flight.destination }}</small>
                     </div>
                 </div>
 
-            <a href="{{ flight.deeplink }}&dest={{ destination|urlencode }}" target="_blank" class="book-btn">
-                 Book Flight →
-             </a>
-        </div>
+                <div style="padding: 0 15px 15px 15px;">
+                    <a href="{{ flight.deeplink }}&dest={{ destination|urlencode }}" target="_blank" class="book-btn">
+                        Book Flight →
+                    </a>
+                </div>
+            </div>
         {% endfor %}
     {% else %}
-        <div class="no-results text-center">
+        <div class="no-results-container">
             <h2>😕 No flights found</h2>
-            <a href="/travel-ui" class="book-btn" style="background: #764ba2 !important;">Try Again</a>
+            <p>We couldn't find matches for this route and date.</p>
+            <a href="/travel-ui" class="btn-action btn-back" style="max-width: 200px; margin: 20px auto;">Try Again</a>
         </div>
     {% endif %}
 </div>
 
 <script>
-    function isIos() { return /iphone|ipad|ipod/.test(window.navigator.userAgent.toLowerCase()); }
-    function isInStandaloneMode() { return ('standalone' in window.navigator) && (window.navigator.standalone); }
-    if (isIos() && !isInStandaloneMode()) { document.getElementById('ios-install-prompt').style.display = 'block'; }
+    // iOS Install Prompt Logic
+    window.addEventListener('load', function() {
+        const isIos = /iphone|ipad|ipod/.test(window.navigator.userAgent.toLowerCase());
+        const isStandalone = ('standalone' in window.navigator) && (window.navigator.standalone);
+        const prompt = document.getElementById('ios-install-prompt');
+        if (prompt && isIos() && !isStandalone) { prompt.style.display = 'block'; }
+    });
     function closePrompt() { document.getElementById('ios-install-prompt').style.display = 'none'; }
 </script>
 {% endblock %}
