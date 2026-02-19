@@ -2,10 +2,8 @@
 
 {% block content %}
 <div class="unified-app-wrapper">
-    <a href="/travel-ui" style="text-decoration: none; color: #667eea; font-weight: bold; font-size: 14px;">← BACK TO SEARCH</a>
-
     <div class="header" style="margin-top: 10px;">
-        <h1 style="font-size: 22px; margin: 0;">✈️ Flight Search Results</h1>
+        <h1 style="font-size: 22px; margin: 0; color: #333;">✈️ Flight Search Results</h1>
         <div class="route-info" style="margin-top: 5px; color: #666; font-size: 14px;">
             <span><strong>{{ origin }}</strong></span>
             <span class="arrow">{% if trip_type in ['round-trip', 'round_trip'] %}⇄{% else %}→{% endif %}</span>
@@ -14,10 +12,14 @@
         </div>
     </div>
 
-    <div class="hotel-card" style="text-align: center;">
-        <h3 style="font-size: 16px; margin-bottom: 5px;">🏠 Need a stay in {{ destination }}?</h3>
-        <a href="https://search.hotellook.com/?location={{ destination[:3] }}&checkIn={{ depart_date }}&marker=665788&language=en" target="_blank" 
-           style="color: #218838; font-weight: bold; text-decoration: none; font-size: 14px;">Find Hotels →</a>
+    <div class="action-bar" style="display: flex; gap: 10px; margin: 15px 0;">
+        <a href="/travel-ui" class="btn-action btn-back" style="flex: 1; text-align: center;">
+            ← Back to Search
+        </a>
+        <a href="https://search.hotellook.com/?location={{ destination[:3] }}&checkIn={{ depart_date }}&marker=665788&language=en" 
+           target="_blank" class="btn-action btn-hotel" style="flex: 1; text-align: center;">
+            🏠 Find Hotels
+        </a>
     </div>
 
     {% if flights %}
