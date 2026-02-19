@@ -146,3 +146,23 @@ window.onpageshow = function (event) {
   const $searchBtn = $('#searchForm button[type="submit"]');
   $searchBtn.prop("disabled", false).text("Search Flights");
 };
+// search flight button is clicked then wait for result
+document.addEventListener("DOMContentLoaded", function () {
+  const searchForm = document.querySelector("form");
+  const searchButtons = document.getElementById("search-buttons");
+  const loadingIndicator = document.getElementById("loading");
+
+  if (searchForm) {
+    searchForm.addEventListener("submit", function () {
+      // 1. Hide the buttons (Search and Clear All)
+      if (searchButtons) {
+        searchButtons.style.setProperty("display", "none", "important");
+      }
+
+      // 2. Show the single loading indicator
+      if (loadingIndicator) {
+        loadingIndicator.style.display = "block";
+      }
+    });
+  }
+});
