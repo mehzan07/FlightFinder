@@ -47,8 +47,12 @@
                     </div>
                 </div>
 
-                <a href="{{ flight.deeplink }}" class="sync-search-text" style="display: block; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white !important; padding: 15px; border-radius: 12px; text-align: center; text-decoration: none; font-weight: bold;">
-                    Book Flight →
+                <a href="{{ flight.deeplink }}" 
+                    target="_blank" 
+                    rel="noopener noreferrer" 
+                    class="sync-search-text" 
+                    style="display: block; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white !important; padding: 15px; border-radius: 12px; text-align: center; text-decoration: none; font-weight: bold;">
+                        Book Flight →
                 </a>
             </div>
         {% endfor %}
