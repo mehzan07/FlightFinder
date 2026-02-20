@@ -16,7 +16,16 @@
             style="background: #6376f1; color: white !important; padding: 10px; border-radius: 10px; flex: 1; text-align: center; text-decoration: none;">
             ← Back to Search
         </a>
+        <!--
         <a href="https://search.hotellook.com/" class="btn-action sync-search-text" style="background: #28a745; color: white !important; padding: 10px; border-radius: 10px; flex: 1; text-align: center; text-decoration: none;">🏠 Find Hotels</a>
+        -->
+        <a href="https://search.hotellook.com/?location={{ destination[:3] }}&checkIn={{ depart_date }}&marker=665788&language=en" 
+            target="_blank" 
+            rel="noopener noreferrer"
+            class="btn-action sync-search-text" 
+            style="background: #28a745; color: white !important; padding: 10px; border-radius: 10px; flex: 1; text-align: center; text-decoration: none;">
+            🏠 Find Hotels
+        </a>
     </div>
 
     {% if flights %}
