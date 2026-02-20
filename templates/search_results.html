@@ -1,73 +1,57 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<div class="results-page-wrapper">
-    <div class="results-header-container">
-        <h1 class="results-main-title">✈️ Flight Search Results</h1>
-        <div class="results-route-info">
-            <strong>{{ origin }}</strong> 
-            <span class="results-arrow">{% if trip_type in ['round-trip', 'round_trip'] %}⇄{% else %}→{% endif %}</span> 
-            <strong>{{ destination }}</strong>
-            <span class="results-divider">|</span> 
-            📅 {{ depart_date }}
-        </div>
-    </div>
+<div class="app-container">
+    <div class="header-section" style="margin-bottom: 25px;">
+    <h1 class="sync-search-text" style="font-size: 22px; margin-bottom: 5px; font-weight: 800;">✈️ Flight Search Results</h1>
+    <p class="sync-search-text">
+        <strong>{{ origin }}</strong> ⇄ <strong>{{ destination }}</strong> | 📅 {{ depart_date }}
+    </p>
+</div>
 
-    <div class="results-action-bar">
-        <a href="/travel-ui" class="res-btn-action res-btn-back">
-            ← Back to Search
-        </a>
-        <a href="https://search.hotellook.com/?location={{ destination[:3] }}&checkIn={{ depart_date }}&marker=665788&language=en" 
-           target="_blank" class="res-btn-action res-btn-hotel">
-            🏠 Find Hotels
-        </a>
+    <div class="action-bar" style="margin: 20px 0; display: flex; gap: 10px;">
+        <a href="/travel-ui" class="btn-action sync-search-text" style="background: #6376f1; color: white !important; padding: 10px; border-radius: 10px; flex: 1; text-align: center; text-decoration: none;">← Back to Search</a>
+        <a href="https://search.hotellook.com/" class="btn-action sync-search-text" style="background: #28a745; color: white !important; padding: 10px; border-radius: 10px; flex: 1; text-align: center; text-decoration: none;">🏠 Find Hotels</a>
     </div>
 
     {% if flights %}
-        <div class="results-count-text">Found {{ flights|length }} flights</div>
+        <div class="sync-search-text" style="margin-bottom: 15px; color: #888;">Found {{ flights|length }} flights</div>
         
         {% for flight in flights %}
-            <div class="flight-result-card">
-                <div class="flight-result-header">
+            <div class="flight-card" style="background: white; border-radius: 16px; padding: 25px; margin-bottom: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.05);">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
                     <div style="display: flex; align-items: center;">
-                        <div class="airline-badge">{{ flight.airline_display }}</div>
-                        <div style="margin-left: 15px; text-align: left;">
-                            <div class="res-airline-name">{{ flight.airline }}</div>
-                            <small class="res-trip-label">{{ trip_type }}</small>
+                        <div class="sync-search-text" style="background: #f8f9fa; padding: 10px; border-radius: 8px; font-weight: bold;">{{ flight.airline_display }}</div>
+                        <div style="margin-left: 15px;">
+                            <div class="sync-search-text" style="font-weight: bold;">{{ flight.airline }}</div>
+                            <div class="sync-search-text" style="font-size: 14px; color: #aaa;">{{ trip_type|upper }}</div>
                         </div>
                     </div>
-                    <div class="res-price-tag">{{ flight.price }} {{ currency or 'SEK' }}</div>
+                    <div class="sync-search-text" style="font-weight: bold; color: #764ba2;">{{ flight.price }} {{ currency or 'SEK' }}</div>
                 </div>
                 
-                <div class="flight-result-details">
-                    <div class="res-time-block">
-                        <div class="res-time-val">
-                            {{ flight.depart.split(' ')[1][:5] if (flight.depart and ' ' in flight.depart) else flight.depart }}
-                        </div>
-                        <div class="res-city-code">{{ flight.origin }}</div>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; text-align: center;">
+                    <div style="flex: 1;">
+                        <div class="sync-search-text" style="font-weight: bold;">{{ flight.depart.split(' ')[1][:5] if (flight.depart and ' ' in flight.depart) else flight.depart }}</div>
+                        <div class="sync-search-text" style="color: #666;">{{ flight.origin }}</div>
                     </div>
                     
-                    <div class="res-path-line">
-                        <hr>
-                        <span class="res-plane-icon">✈️</span>
+                    <div style="flex: 1; padding: 0 20px; position: relative;">
+                        <hr style="border: none; border-top: 2px solid #eee;">
+                        <span style="position: absolute; top: -12px; left: 45%; background: white; padding: 0 5px;">✈️</span>
                     </div>
                     
-                    <div class="res-time-block">
-                        <div class="res-time-val">{{ flight.arrival_time }}</div>
-                        <div class="res-city-code">{{ flight.destination }}</div>
+                    <div style="flex: 1;">
+                        <div class="sync-search-text" style="font-weight: bold;">{{ flight.arrival_time }}</div>
+                        <div class="sync-search-text" style="color: #666;">{{ flight.destination }}</div>
                     </div>
                 </div>
 
-                <a href="{{ flight.deeplink }}&dest={{ destination|urlencode }}" target="_blank" class="res-book-btn">
+                <a href="{{ flight.deeplink }}" class="sync-search-text" style="display: block; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white !important; padding: 15px; border-radius: 12px; text-align: center; text-decoration: none; font-weight: bold;">
                     Book Flight →
                 </a>
             </div>
         {% endfor %}
-    {% else %}
-        <div class="flight-result-card" style="text-align: center;">
-            <h2 style="font-size: 22px;">😕 No flights found</h2>
-            <a href="/travel-ui" class="res-book-btn" style="max-width: 250px; margin: 20px auto;">Try Again</a>
-        </div>
     {% endif %}
 </div>
 {% endblock %}
