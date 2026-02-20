@@ -29,7 +29,8 @@
     </div>
 
     {% if flights %}
-        <div class="sync-search-text" style="margin-bottom: 15px; color: #888;">Found {{ flights|length }} flights</div>
+        <!-- <div class="sync-search-text" style="margin-bottom: 15px; color: #888;">Found {{ flights|length }} flights</div> -->
+        <div class="results-count-text">Found {{ flights|length }} flights</div>
         
         {% for flight in flights %}
             <div class="flight-card" style="background: white; border-radius: 16px; padding: 25px; margin-bottom: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.05);">

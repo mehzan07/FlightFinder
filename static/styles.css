@@ -307,3 +307,44 @@ h1.sync-search-text {
   font-size: 13px !important;
   font-weight: 700 !important;
 }
+
+/* css for to make both pages same wide */
+/* Forces both containers to be identical in width and alignment */
+.app-container,
+.unified-app-wrapper,
+.results-page-wrapper {
+  width: 95% !important;
+  max-width: 750px !important; /* This is the "sweet spot" for your search form */
+  margin: 30px auto !important;
+  padding: 0 15px !important; /* Prevents touching screen edges on mobile */
+  box-sizing: border-box !important;
+}
+
+/* Ensures the cards inside the results page stretch to the full width of the container */
+.flight-card,
+.main-card-style,
+form {
+  width: 100% !important;
+  box-sizing: border-box !important;
+}
+.results-count,
+.results-count-text,
+.results-count-label {
+  padding-left: 0 !important;
+  margin-left: 0 !important;
+  font-size: 15px !important;
+  font-weight: 480 !important; /* Matching your sync weight */
+}
+
+/* ... other width sync code ... */
+.results-count,
+.results-count-text,
+.results-count-label {
+  padding-left: 0 !important;
+  margin-left: 0 !important;
+  font-size: 15px !important;
+  font-weight: 480 !important;
+  margin-bottom: 15px !important;
+  display: block;
+  color: #888;
+}
