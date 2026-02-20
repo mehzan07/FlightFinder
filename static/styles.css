@@ -5,6 +5,7 @@ body {
   padding: 0;
   font-family:
     -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  -webkit-font-smoothing: antialiased;
 }
 
 /* --- Ultra Slim Navigation --- */
@@ -22,17 +23,18 @@ body {
   font-weight: 800;
 }
 
-/* --- Master Container (Synchronizes Search & Results Width) --- */
-/* Set to 700px to give the "Bigger" UI feel you requested */
+/* --- Master Container --- */
+/* Increased to 750px for the "Bigger" UI feel of the search page */
 .app-container,
 .unified-app-wrapper {
-  width: 95%;
-  max-width: 700px;
-  margin: 20px auto;
+  width: 90%;
+  max-width: 750px;
+  margin: 30px auto;
   box-sizing: border-box;
 }
 
 /* --- Unified Card Design --- */
+/* Increased padding to 30px to match the search form spacing */
 form,
 .flight-card,
 .hotel-card,
@@ -40,20 +42,20 @@ form,
 .header-card,
 .no-results {
   background: #ffffff !important;
-  border-radius: 16px !important;
-  padding: 25px !important;
+  border-radius: 20px !important;
+  padding: 30px !important;
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05) !important;
-  margin-bottom: 20px;
+  margin-bottom: 25px;
   border: none !important;
   width: 100% !important;
   box-sizing: border-box;
 }
 
-/* --- Action Bar: Back to Search & Find Hotel --- */
+/* --- Action Bar --- */
 .action-bar {
   display: flex;
-  gap: 12px;
-  margin-bottom: 15px;
+  gap: 15px;
+  margin-bottom: 20px;
 }
 
 .btn-action {
@@ -61,9 +63,9 @@ form,
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 12px 10px;
-  border-radius: 10px;
-  font-size: 14px; /* Uniform text size as requested */
+  padding: 14px 10px; /* Taller buttons to match form inputs */
+  border-radius: 12px;
+  font-size: 15px; /* Slightly larger text */
   font-weight: 700;
   text-decoration: none;
   transition:
@@ -93,56 +95,61 @@ form,
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 20px;
+  margin-bottom: 25px;
 }
 
 .flight-details {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 20px;
+  margin: 30px 0;
   text-align: center;
 }
 
 .time-display {
-  font-size: 22px;
-  font-weight: bold;
+  font-size: 26px; /* Larger times for better readability */
+  font-weight: 800;
   color: #222;
+  letter-spacing: -0.5px;
 }
 
 .airport-code {
   color: #666;
   font-weight: 600;
+  font-size: 15px;
+  margin-top: 4px;
 }
 
 .flight-path {
   flex: 1;
-  color: #ddd;
+  color: #eee;
   position: relative;
-  padding: 0 15px;
+  padding: 0 20px;
 }
 
 .flight-path hr {
   border: 0;
-  border-top: 2px solid #eee;
+  border-top: 2px solid #f0f0f0;
 }
 
 .plane-icon {
   position: absolute;
-  top: -12px;
+  top: -14px;
   left: 45%;
   background: white;
-  padding: 0 5px;
+  padding: 0 8px;
+  font-size: 20px;
 }
 
 /* --- Inputs & Buttons --- */
 input,
 select,
 .form-control {
-  height: 48px !important;
-  border-radius: 10px !important;
+  height: 52px !important; /* Unified height */
+  border-radius: 12px !important;
   border: 1px solid #ddd !important;
-  margin-bottom: 15px;
+  margin-bottom: 18px;
+  font-size: 16px;
 }
 
 button[type="submit"],
@@ -150,34 +157,36 @@ button[type="submit"],
 .book-btn {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
   color: white !important;
-  height: 52px;
-  border-radius: 12px;
+  height: 55px; /* Matches Search button height */
+  border-radius: 14px;
   font-weight: 700;
+  font-size: 16px;
   width: 100%;
   border: none;
   display: flex;
   align-items: center;
   justify-content: center;
   text-decoration: none;
-  transition: opacity 0.2s;
+  transition: all 0.2s ease;
 }
 
 .book-btn:hover {
   opacity: 0.9;
+  transform: translateY(-1px);
 }
 
 /* --- Results UI --- */
 .price-tag {
   color: #764ba2;
-  font-size: 22px;
+  font-size: 24px;
   font-weight: 800;
 }
 
 .airline-badge {
-  min-width: 50px;
-  height: 50px;
+  min-width: 55px;
+  height: 55px;
   background: #f8f9fa;
-  border-radius: 10px;
+  border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -185,10 +194,11 @@ button[type="submit"],
 }
 
 .results-count {
-  font-size: 14px;
+  font-size: 15px;
   color: #888;
-  margin-bottom: 12px;
+  margin-bottom: 15px;
   font-weight: 500;
+  padding-left: 5px;
 }
 
 /* --- Redirect Spinner --- */
@@ -254,4 +264,143 @@ input:checked + .slider {
 }
 input:checked + .slider:before {
   transform: translateX(26px);
+}
+
+/* css for Search Results page */
+/* --- ISOLATED SEARCH RESULTS STYLES --- */
+.results-page-wrapper {
+  width: 90%;
+  max-width: 750px;
+  margin: 30px auto;
+}
+
+.results-main-title {
+  font-size: 28px;
+  font-weight: 700;
+  color: #333;
+  margin: 0;
+}
+
+.results-route-info {
+  color: #666;
+  font-size: 16px;
+  margin: 8px 0 25px 0;
+}
+
+.results-divider {
+  color: #ccc;
+  margin: 0 10px;
+}
+
+/* Buttons */
+.results-action-bar {
+  display: flex;
+  gap: 15px;
+  margin-bottom: 25px;
+}
+
+.res-btn-action {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 50px;
+  border-radius: 12px;
+  font-size: 15px;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.res-btn-back {
+  background: #6376f1;
+  color: white !important;
+}
+.res-btn-hotel {
+  background: #28a745;
+  color: white !important;
+}
+
+/* Flight Cards */
+.flight-result-card {
+  background: #ffffff;
+  border-radius: 20px;
+  padding: 30px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+  margin-bottom: 25px;
+}
+
+.flight-result-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.res-airline-name {
+  font-size: 18px;
+  font-weight: 700;
+  color: #333;
+}
+.res-price-tag {
+  color: #764ba2;
+  font-size: 24px;
+  font-weight: 800;
+}
+
+.flight-result-details {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin: 35px 0;
+}
+
+.res-time-val {
+  font-size: 28px;
+  font-weight: 800;
+  color: #222;
+}
+.res-city-code {
+  color: #666;
+  font-weight: 600;
+  font-size: 15px;
+}
+
+/* Path Line */
+.res-path-line {
+  flex: 1;
+  position: relative;
+  padding: 0 20px;
+}
+.res-path-line hr {
+  border: 0;
+  border-top: 2px solid #eee;
+}
+.res-plane-icon {
+  position: absolute;
+  top: -14px;
+  left: 45%;
+  background: white;
+  padding: 0 8px;
+  font-size: 18px;
+}
+
+/* Book Button */
+.res-book-btn {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white !important;
+  height: 55px;
+  border-radius: 14px;
+  font-weight: 700;
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  width: 100%;
+}
+
+.results-count-text {
+  font-size: 15px;
+  color: #888;
+  margin-bottom: 12px;
+  padding-left: 5px;
 }
