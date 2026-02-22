@@ -30,6 +30,18 @@
     </script>
   </head>
   <body style="margin: 0; padding: 0;">
+    <div id="loading-overlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255, 255, 255, 0.98); z-index: 10000; flex-direction: column; align-items: center; justify-content: center; font-family: sans-serif; text-align: center;">
+      <div class="spinner-border" role="status" style="width: 4rem; height: 4rem; border-width: 0.3em; color: #32CD32;">
+        <span class="visually-hidden">Loading...</span>
+      </div>
+      <h3 style="color: #333; margin-top: 25px; font-weight: 700;">Searching for flights...</h3>
+
+      <div style="margin-top: 30px; padding: 20px; max-width: 400px; border-radius: 12px; background: #f9f9f9; border-left: 5px solid #32CD32; text-align: left; margin-left: 15px; margin-right: 15px;">
+        <small style="color: #32CD32; font-weight: bold; text-transform: uppercase;">Travel Tip</small>
+        <p id="travel-tip" style="color: #555; font-size: 15px; margin-top: 5px; min-height: 45px; transition: opacity 0.5s;">Booking your flight on a Tuesday can often save you money.</p>
+      </div>
+    </div>
+
     <div class="blog-nav-header" style="background-color: #32CD32; padding: 12px 20px; text-align: left; display: flex; align-items: center; justify-content: space-between; font-family: sans-serif;">
       <a href="https://softsolutionsahand.com" style="text-decoration: none; color: white; display: flex; align-items: center; gap: 8px;">
         <span style="font-size: 18px;">←</span>
@@ -65,5 +77,26 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script src="{{ url_for('static', filename='js/ios-pwa.js') }}"></script>
+
+    <script>
+      const tips = ['Booking 3 weeks in advance usually gets you the best price.', 'Mid-week flights are generally cheaper than weekend departures.', "Searching in 'Incognito' mode helps prevent price hikes.", 'Traveling on major holidays can be cheaper if you fly on the day itself!', 'Check nearby airports to potentially save up to 20% on your fare.', "Flying during 'off-peak' hours can significantly reduce ticket costs."]
+      
+      function showLoading() {
+        const overlay = document.getElementById('loading-overlay')
+        const tipElement = document.getElementById('travel-tip')
+      
+        overlay.style.display = 'flex'
+      
+        let tipIndex = 0
+        setInterval(() => {
+          tipIndex = (tipIndex + 1) % tips.length
+          tipElement.style.opacity = 0
+          setTimeout(() => {
+            tipElement.innerText = tips[tipIndex]
+            tipElement.style.opacity = 1
+          }, 500)
+        }, 3000)
+      }
+    </script>
   </body>
 </html>
