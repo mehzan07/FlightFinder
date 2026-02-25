@@ -1,4 +1,4 @@
-from flask import Blueprint, redirect, render_template, request, jsonify, url_for, session
+from flask import Blueprint, redirect, render_template, request, jsonify, url_for, session, send_from_directory, current_app
 import requests
 from travel import travel_chatbot
 from datetime import datetime
@@ -468,3 +468,8 @@ def generate_booking_link(origin, destination, date):
 @travel_bp.route('/offline')
 def offline():
     return render_template('offline.html')
+
+@travel_bp.route('/ads.txt')
+def ads_txt():
+    # This looks for ads.txt inside your 'static' folder
+    return send_from_directory(current_app.static_folder, 'ads.txt')
