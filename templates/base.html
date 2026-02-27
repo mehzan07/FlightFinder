@@ -4,20 +4,19 @@
     <meta charset="UTF-8" />
     <title>
       {% if form_data %}
-        Cheap Flights: {{ form_data.origin_code }} to {{ form_data.destination_code }} | FlightFinder Deals
+        Cheap Flights: {{ form_data.origin_code }} to {{ form_data.destination_code }} | FlightFinder
       {% else %}
-        FlightFinder | Real-Time Cheap Flight Search & Live Travel Engine
+        FlightFinder | Real-Time Cheap Flight Search
       {% endif %}
     </title>
-    <meta name="description" content="Use FlightFinder's Python-powered engine to search for real-time flight deals. Compare prices instantly and find the cheapest routes with our multi-threaded search tool." />
+    <meta name="description" content="Use FlightFinder's Python-powered engine to search for real-time flight deals." />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-    <meta name="theme-color" content="#667eea" />
+    <meta name="theme-color" content="#32CD32" />
     <link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}" />
     <link rel="apple-touch-icon" href="{{ url_for('static', filename='icon-512.png') }}" />
 
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}" />
-    <!-- Google Adsense code -->
     <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9886955345755978" crossorigin="anonymous"></script>
 
     <script>
@@ -31,52 +30,36 @@
       }
     </script>
   </head>
-  <body style="margin: 0; padding: 0;">
+  <body style="margin: 0; padding: 0; background-color: #f4f7f6;">
     <div id="loading-overlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255, 255, 255, 0.98); z-index: 10000; flex-direction: column; align-items: center; justify-content: center; font-family: sans-serif; text-align: center;">
       <div class="spinner-border" role="status" style="width: 4rem; height: 4rem; border-width: 0.3em; color: #32CD32;">
         <span class="visually-hidden">Loading...</span>
       </div>
       <h3 style="color: #333; margin-top: 25px; font-weight: 700;">Searching for flights...</h3>
-
-      <div style="margin-top: 30px; padding: 20px; max-width: 400px; border-radius: 12px; background: #f9f9f9; border-left: 5px solid #32CD32; text-align: left; margin-left: 15px; margin-right: 15px;">
+      <div style="margin-top: 30px; padding: 20px; max-width: 400px; border-radius: 12px; background: #f9f9f9; border-left: 5px solid #32CD32; text-align: left; margin: 0 15px;">
         <small style="color: #32CD32; font-weight: bold; text-transform: uppercase;">Travel Tip</small>
         <p id="travel-tip" style="color: #555; font-size: 15px; margin-top: 5px; min-height: 45px; transition: opacity 0.5s;">Booking your flight on a Tuesday can often save you money.</p>
       </div>
     </div>
 
-    <div class="blog-nav-header" style="background-color: #32CD32; padding: 12px 20px; text-align: left; display: flex; align-items: center; justify-content: space-between; font-family: sans-serif;">
-      <a href="https://softsolutionsahand.com" style="text-decoration: none; color: white; display: flex; align-items: center; gap: 8px;">
-        <span style="font-size: 18px;">←</span>
-        <span style="font-size: 16px; font-weight: 600;">Softsolutionsahand</span>
-      </a>
-      <span style="color: rgba(255,255,255,0.8); font-size: 13px; font-style: italic;">Flight Search Tool</span>
-    </div>
-
-    <nav class="app-nav">
-      <a href="/travel-ui" class="nav-brand">✈️ FlightFinder</a>
-    </nav>
-
-    <main class="app-container">
+    <main class="app-container" style="min-height: 80vh;">
       {% block content %}
 
       {% endblock %}
     </main>
 
-    <footer style="margin-top: 50px; padding: 40px 20px; background-color: #1a1a1a; color: #ffffff; text-align: center; border-top: 4px solid #32CD32;">
+    <footer style="margin-top: 50px; padding: 60px 20px; background-color: #1a1a1a; color: #ffffff; text-align: center; border-top: 4px solid #32CD32;">
       <div style="max-width: 800px; margin: 0 auto;">
-        <h3 style="margin-bottom: 10px; font-size: 18px;">About the Developer</h3>
+        <h3 style="margin-bottom: 10px; font-size: 18px; color: #32CD32;">Developed by Mehrdad</h3>
+        <p style="font-size: 14px; color: #ccc; margin-bottom: 25px; line-height: 1.6;">Specialized .NET & Python Consultant | Dedicated to efficient travel tech.</p>
 
-        <p style="font-size: 14px; color: #ccc; margin-bottom: 20px; line-height: 1.6;">
-          Hi, I'm <strong>Mehrdad</strong>. Consultant specialized in <strong>.NET</strong>, <strong>Microsoft Stack</strong>, <strong>Docker</strong>, <strong>C#</strong>, <strong>Python</strong>, and more.
-        </p>
-
-        <div style="display: flex; justify-content: center; gap: 20px; flex-wrap: wrap;">
-          <a href="https://softsolutionsahand.com" target="_blank" rel="noopener" style="color: #32CD32; text-decoration: none; font-weight: 600;">🌐 My Blog</a>
-          <a href="https://www.linkedin.com/in/mehzan07/" target="_blank" rel="noopener" style="color: #32CD32; text-decoration: none; font-weight: 600;">🔗 LinkedIn</a>
-          <a href="https://softsolutionsahand.com/contact/" target="_blank" rel="noopener" style="color: #32CD32; text-decoration: none; font-weight: 600;">✉️ Contact</a>
+        <div style="display: flex; justify-content: center; gap: 30px; flex-wrap: wrap;">
+          <a href="https://softsolutionsahand.com" target="_blank" rel="noopener" style="color: white; text-decoration: none; font-size: 14px;">🌐 Blog</a>
+          <a href="https://www.linkedin.com/in/mehzan07/" target="_blank" rel="noopener" style="color: white; text-decoration: none; font-size: 14px;">🔗 LinkedIn</a>
+          <a href="https://softsolutionsahand.com/contact/" target="_blank" rel="noopener" style="color: white; text-decoration: none; font-size: 14px;">✉️ Contact</a>
         </div>
 
-        <p style="font-size: 11px; color: #777; margin-top: 25px;">&copy; 2026 Softsolutionsahand | Powered by Travelpayouts</p>
+        <p style="font-size: 11px; color: #666; margin-top: 35px;">&copy; 2026 Soft Solutions Ahand | Data provided by Travelpayouts</p>
       </div>
     </footer>
 
@@ -89,9 +72,7 @@
       function showLoading() {
         const overlay = document.getElementById('loading-overlay')
         const tipElement = document.getElementById('travel-tip')
-      
         overlay.style.display = 'flex'
-      
         let tipIndex = 0
         setInterval(() => {
           tipIndex = (tipIndex + 1) % tips.length

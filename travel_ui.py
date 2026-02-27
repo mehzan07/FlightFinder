@@ -71,8 +71,8 @@ def is_token_match(token, airport):
     )
 
 # === Routes ===
-
-@travel_bp.route("/travel-ui", methods=["GET", "POST"])
+#@travel_bp.route("/travel-ui", methods=["GET", "POST"])
+@travel_bp.route("/", methods=["GET", "POST"])
 def travel_ui():
     """Main entry point for travel search form and results display"""
     logger.info("travel_ui route hit")
